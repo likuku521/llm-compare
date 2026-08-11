@@ -155,7 +155,7 @@ function recoBanner(){
 function renderCards(list){
   const cards = list.map((m, i) => {
     const ctxPct = Math.min(100, m.contextVal/10);
-    return `<div class="mcard scroll-reveal" style="animation-delay:${Math.min(i*40,500)}ms" data-mid="${m.id}"
+    return `<div class="mcard rise" style="animation-delay:${Math.min(i*40,500)}ms" data-mid="${m.id}"
       onclick="openModal('${m.id}')">
       <div class="mc-top">
         <div class="mc-grade" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
@@ -221,9 +221,9 @@ function setMode(mode){
 /* ===== 工具视图 ===== */
 function renderTools(){
   const wrap = document.getElementById('main');
-  const cards = TOOLS.map(t => {
+  const cards = TOOLS.map((t, i) => {
     const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
-    return `<div class="toolcard scroll-reveal" data-mid="tool-${t.id}">
+    return `<div class="toolcard rise" style="animation-delay:${Math.min(i*60,400)}ms" data-mid="tool-${t.id}">
       <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
       <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
       <div class="t-desc">${esc(t.desc)}</div>
@@ -440,7 +440,7 @@ function renderStats(){
     {v: MODELS.filter(m=>m.multimodal.includes('图像')).length, lbl: '图像输入', cls:'green'}
   ];
   document.getElementById('hdStats').innerHTML = items.map((it, i) =>
-    `<div class="stat scroll-reveal" style="animation-delay:${i*70}ms"><div class="num ${it.cls}" data-count="${it.v}">0</div><div class="lbl">${it.lbl}</div></div>`
+    `<div class="stat rise" style="animation-delay:${i*70}ms"><div class="num ${it.cls}" data-count="${it.v}">0</div><div class="lbl">${it.lbl}</div></div>`
   ).join('');
   // count-up 动画
   const nums = document.querySelectorAll('.stat .num[data-count]');
@@ -524,5 +524,4 @@ document.getElementById('sortBox').addEventListener('change', e => { state.sort 
 renderStats();
 buildFilters();
 renderModels();
-setTimeout(initReveal, 300);
 fetchLive();

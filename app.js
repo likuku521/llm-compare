@@ -1,5 +1,10 @@
 'use strict';
-/* ===== 数据加载 ===== */
+/* ============================================================
+   大模型多维对比总览 v3
+   渲染层：卡片网格（默认）/ 表格 双模式
+   动效层（ui-motion）：卡片3D tilt + 光标聚光 + 上下文条展开 + scroll-reveal
+   交互层（ui-interaction）：推荐横幅 / 筛选状态 / 弹窗生命周期
+   ============================================================ */
 const DATA = JSON.parse(document.getElementById('app-data').textContent);
 const MODELS = DATA.models;
 const TOOLS = DATA.tools;
@@ -12,16 +17,15 @@ const toolBadgeClass = {
 
 /* ===== 状态 ===== */
 const state = {
-  view: 'models',
+  view: 'models', mode: 'cards',
   q: '', grade: '', vendor: '', mm: '', sort: 'grade',
   modalId: null
 };
 
 /* ===== 工具函数 ===== */
 function esc(s){return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function gradeColor(g){return META.gradeDef[g] ? META.gradeDef[g].color : '#64748b';}
+function gradeColor(g){return META.gradeDef[g] ? META.gradeDef[g].color : '#7A87A6';}
 function fmtCtx(v){return v >= 1000 ? (v/1000).toFixed(v%1000===0?0:1)+'M' : v+'K';}
-
 function mmIcon(m){
   let h = '';
   if(m.includes('文本')) h += '<i>文本</i>';
@@ -31,10 +35,9 @@ function mmIcon(m){
   return h || '<i>—</i>';
 }
 function costClass(c){return c==='低'?'low':(c==='中'?'mid':'high');}
-
 function toolBadges(model){
   const ids = model.tools || [];
-  if(!ids.length) return '<span class="cost" style="color:#5b6478">未内置</span>';
+  if(!ids.length) return '<span style="color:var(--dim);font-size:11px">未内置</span>';
   return ids.map(id => {
     const t = toolById[id]; if(!t) return '';
     const cls = toolBadgeClass[id] || 'other';
@@ -42,7 +45,7 @@ function toolBadges(model){
   }).join('');
 }
 
-/* ===== 任务推荐词典（搜索框智能推荐）===== */
+/* ===== 任务推荐词典 ===== */
 const TASKS = [
   { kw:["做ppt","做ppt","ppt","演示","汇报","课件","幻灯片","路演"], label:"做PPT/演示汇报",
     scenes:["办公"], strengths:["办公"], top:["glm-5.2","qwen-3.8-max","hy3","kimi-k3","gpt-5.2"],
@@ -84,12 +87,9 @@ const TASKS = [
 
 function matchTask(q){
   const lower = q.toLowerCase();
-  for(const t of TASKS){
-    if(t.kw.some(k => lower.includes(k))) return t;
-  }
+  for(const t of TASKS){ if(t.kw.some(k => lower.includes(k))) return t; }
   return null;
 }
-
 function scoreModel(m, task){
   let s = 0;
   (task.scenes||[]).forEach(sc => { if((m.scenes||[]).includes(sc)) s += 3; });
@@ -113,11 +113,8 @@ function filteredModels(){
   if(state.q){
     const task = matchTask(state.q);
     if(task){
-      // 推荐模式：按任务评分排序，保留 Top8
       list = list.map(m => ({m, s: scoreModel(m, task)}))
-        .sort((a,b) => b.s - a.s)
-        .slice(0, 8)
-        .map(x => x.m);
+        .sort((a,b) => b.s - a.s).slice(0, 8).map(x => x.m);
     } else {
       const q = state.q.toLowerCase();
       list = list.filter(m => {
@@ -137,31 +134,56 @@ function recoBanner(){
   const task = matchTask(state.q);
   if(!task) return '';
   const scored = MODELS.map(m => ({m, s: scoreModel(m, task)}))
-    .sort((a,b) => b.s - a.s)
-    .slice(0, 3);
-  const chips = scored.map(x => {
+    .sort((a,b) => b.s - a.s).slice(0, 3);
+  const chips = scored.map((x, i) => {
     const m = x.m;
-    return `<span class="reco-chip" onclick="openModal('${m.id}')">
-      <span class="grade" style="background:${gradeColor(m.grade)};width:22px;height:22px;font-size:11px;border-radius:6px">${m.grade}</span>
+    return `<span class="reco-chip" style="animation-delay:${i*90}ms" onclick="openModal('${m.id}')">
+      <span class="grade" style="background:${gradeColor(m.grade)};width:26px;height:26px;font-size:12px;border-radius:8px">${m.grade}</span>
       <b>${esc(m.name)}</b>
       <i>${esc(m.bestFor.split('——')[0])}</i>
     </span>`;
   }).join('');
   return `<div class="reco">
-    <div class="reco-head">🎯 智能推荐：<b>${esc(task.label)}</b> <span class="reco-reason">${esc(task.reason)}</span></div>
+    <div class="reco-head">🎯 智能推荐：<b>${esc(task.label)}</b></div>
+    <div class="reco-reason">${esc(task.reason)}</div>
     <div class="reco-chips">${chips}</div>
-    <div class="reco-tip">↓ 以下为按任务匹配度排序的前 8 个模型，点击查看详情</div>
+    <div class="reco-tip">↓ 下方为按任务匹配度排序的前 8 个模型</div>
   </div>`;
 }
 
-/* ===== 表格渲染 ===== */
-function renderModels(){
-  const list = filteredModels();
-  const wrap = document.getElementById('main');
-  if(!list.length){
-    wrap.innerHTML = '<div class="empty"><b>没有匹配的模型</b>试试放宽筛选条件或清空搜索</div>';
-    return;
-  }
+/* ===== 卡片视图渲染 ===== */
+function renderCards(list){
+  const cards = list.map((m, i) => {
+    const ctxPct = Math.min(100, m.contextVal/10);
+    return `<div class="mcard scroll-reveal" style="animation-delay:${Math.min(i*40,500)}ms" data-mid="${m.id}"
+      onclick="openModal('${m.id}')">
+      <div class="mc-top">
+        <div class="mc-grade" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
+        <div>
+          <div class="mc-name">${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
+          <div class="mc-vendor">${esc(m.vendorCn || m.vendor)} · ${fmtCtx(m.contextVal)} · ${m.cost}费用${m.thinking?' · 🧠思考':''}</div>
+        </div>
+      </div>
+      <p class="mc-best">${esc(m.bestFor)}</p>
+      <div class="mc-ctx">
+        <div class="ctx-label"><span>上下文窗口</span><b>${fmtCtx(m.contextVal)}</b></div>
+        <div class="bar"><div class="fill" style="width:${ctxPct}%"></div></div>
+      </div>
+      <div class="mc-tags">
+        ${m.thinking?'<span class="tag think">🧠 思考</span>':''}
+        ${(m.strengths||[]).slice(0,3).map(s=>`<span class="tag">${esc(s)}</span>`).join('')}
+      </div>
+      <div class="mc-foot">
+        <span class="mc-cost ${costClass(m.cost)}">${m.cost}成本</span>
+        <div class="mc-tools">${toolBadges(m)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="cards-wrap">${cards}</div>`;
+}
+
+/* ===== 表格视图渲染 ===== */
+function renderTable(list){
   const rows = list.map(m => `
     <tr onclick="openModal('${m.id}')">
       <td><span class="m-name"><span class="grade" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></span><div class="m-vendor">${esc(m.vendorCn || m.vendor)}</div></td>
@@ -171,35 +193,38 @@ function renderModels(){
       <td><span class="cost ${costClass(m.cost)}">${m.cost}</span></td>
       <td><div class="toolcell">${toolBadges(m)}</div></td>
     </tr>`).join('');
-  wrap.innerHTML = recoBanner() + `
-    <div class="tbl-wrap"><table>
-      <thead><tr>
-        <th>模型</th><th>上下文</th><th>多模态</th><th>擅长领域</th><th>费用</th><th>Agent 工具</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table></div>`;
-  // stagger 入场动画（Motion-Driven）
-  requestAnimationFrame(() => {
-    document.querySelectorAll('#main tbody tr').forEach((tr, i) => {
-      tr.style.opacity = '0';
-      tr.style.transform = 'translateY(6px)';
-      setTimeout(() => {
-        tr.style.transition = 'opacity .3s ease, transform .3s ease';
-        tr.style.opacity = '1';
-        tr.style.transform = 'translateY(0)';
-      }, Math.min(i * 18, 400));
-    });
-  });
+  return `<div class="tbl-wrap"><table>
+    <thead><tr><th>模型</th><th>上下文</th><th>多模态</th><th>擅长领域</th><th>费用</th><th>Agent 工具</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
 }
 
-/* ===== 工具视图渲染 ===== */
+/* ===== 模型视图入口 ===== */
+function renderModels(){
+  const list = filteredModels();
+  const wrap = document.getElementById('main');
+  if(!list.length){
+    wrap.innerHTML = `<div class="empty view-enter"><div class="empty-icon">🔍</div><b>没有匹配的模型</b>试试放宽筛选条件或清空搜索</div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="view-enter">${recoBanner()}${state.mode==='cards'?renderCards(list):renderTable(list)}</div>`;
+  initCardFX();
+}
+
+/* ===== 视图模式切换 ===== */
+function setMode(mode){
+  state.mode = mode;
+  document.getElementById('vmCards').classList.toggle('on', mode==='cards');
+  document.getElementById('vmTable').classList.toggle('on', mode==='table');
+  renderModels();
+}
+
+/* ===== 工具视图 ===== */
 function renderTools(){
   const wrap = document.getElementById('main');
   const cards = TOOLS.map(t => {
     const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
-    return `
-    <div class="toolcard">
-      <h3>${esc(t.name)} <span class="grade" style="background:#3a4154;font-size:11px;width:auto;padding:0 8px">${esc(t.type)}</span></h3>
+    return `<div class="toolcard scroll-reveal" data-mid="tool-${t.id}">
+      <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
       <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
       <div class="t-desc">${esc(t.desc)}</div>
       <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
@@ -209,16 +234,16 @@ function renderTools(){
       <div class="t-src">来源：${esc(t.source)}</div>
     </div>`;
   }).join('');
-  wrap.innerHTML = `<div class="toolgrid">${cards}</div>`;
+  wrap.innerHTML = `<div class="view-enter"><div class="toolgrid">${cards}</div></div>`;
+  initCardFX();
 }
 
 /* ===== 实时动态（OpenRouter API）===== */
-let LIVE = [];          // 清洗后的实时模型
+let LIVE = [];
 let LIVE_LOADED = false;
 const OR_API = 'https://openrouter.ai/api/v1/models';
 
 function isLocalModel(orId){
-  // 本地已收录匹配：用 slug 主体与本地 id 精确匹配
   const slug = (orId.split('/').pop() || '').toLowerCase();
   return MODELS.some(m => {
     const mid = m.id.toLowerCase();
@@ -240,9 +265,7 @@ function liveModality(mods){
   const icons = m.map(x => x==='text'?'文本':(x==='image'?'🖼️':(x==='audio'?'🎵':(x==='video'?'🎬':x))));
   return icons.slice(0,4).join(' ');
 }
-function liveVendor(id){
-  return id.split('/')[0] || '?';
-}
+function liveVendor(id){ return id.split('/')[0] || '?'; }
 
 async function fetchLive(){
   try{
@@ -252,7 +275,6 @@ async function fetchLive(){
     clearTimeout(timer);
     const d = await res.json();
     const raw = d.data || [];
-    // 清洗：去掉变体、无效项、OpenRouter 特殊路由模型
     const SKIP_ID = /router|fusion|body builder|:batch|:extended|:nightly|:free/i;
     LIVE = raw.filter(m =>
       m.id && !SKIP_ID.test(m.id) && !m.id.startsWith('~') &&
@@ -261,8 +283,7 @@ async function fetchLive(){
     );
     LIVE_LOADED = true;
   }catch(e){
-    LIVE_LOADED = false;
-    LIVE = [];
+    LIVE_LOADED = false; LIVE = [];
   }
   renderLive();
 }
@@ -270,22 +291,17 @@ async function fetchLive(){
 function renderLive(){
   const tab = document.getElementById('tabLive');
   if(!tab) return;
-  if(!LIVE_LOADED){
-    tab.style.display = 'none';
-    if(state.view === 'live'){ showView('models'); }
-    return;
-  }
+  if(!LIVE_LOADED){ tab.style.display='none'; if(state.view==='live') showView('models'); return; }
   tab.style.display = '';
   if(state.view !== 'live') return;
 
-  // 三块数据
   const newest = [...LIVE].filter(m => m.created > 0).sort((a,b) => b.created - a.created).slice(0, 10);
   const bigCtx = [...LIVE].sort((a,b) => (b.context_length||0) - (a.context_length||0)).slice(0, 10);
   const cheap = [...LIVE].filter(m => (parseFloat(m.pricing?.prompt)||1) <= 0.0000012 && (m.context_length||0) >= 128000)
     .sort((a,b) => parseFloat(a.pricing?.prompt) - parseFloat(b.pricing?.prompt)).slice(0, 10);
 
   const wrap = document.getElementById('main');
-  wrap.innerHTML = `
+  wrap.innerHTML = `<div class="view-enter">
     <div class="live-head">
       <span class="live-dot"></span>
       <b>实时模型动态</b>
@@ -295,17 +311,17 @@ function renderLive(){
     ${liveSection('🚀 超长上下文 (1M+)', bigCtx, 'ctx')}
     ${liveSection('💰 低价精选 (≥128K 上下文)', cheap, 'price')}
     <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 $/1M tokens。</div>
-  `;
+  </div>`;
 }
 
 function liveSection(title, list, kind){
-  const cards = list.map(m => {
+  const cards = list.map((m, i) => {
     const local = isLocalModel(m.id);
     const created = m.created ? new Date(m.created*1000).toLocaleDateString('zh-CN') : '?';
     const cutoff = m.knowledge_cutoff || '—';
     const tag = local ? '<span class="have-tag">✓ 已收录</span>' : '<span class="new-tag">NEW</span>';
     const sub = kind==='created' ? `上线 ${created}` : (kind==='ctx' ? `${Math.round((m.context_length||0)/1000)}K` : fmtPricePerM(m.pricing?.prompt));
-    return `<div class="live-card" onclick="openLive('${esc(m.id)}')">
+    return `<div class="live-card" style="animation-delay:${Math.min(i*70,600)}ms" onclick="openLive('${esc(m.id)}')">
       <div class="live-top"><span class="live-name">${esc(m.name || m.id)}</span>${tag}</div>
       <div class="live-id">${esc(m.id)}</div>
       <div class="live-meta">
@@ -326,7 +342,7 @@ function openLive(id){
   const mods = m.architecture?.input_modalities || [];
   document.getElementById('modalBody').innerHTML = `
     <button class="close" onclick="closeModal()">✕</button>
-    <h2>${esc(m.name || m.id)} ${local?'<span class="tag think">✓ 本地已收录</span>':'<span class="tag" style="background:rgba(240,199,94,.15);color:var(--gold2);border-color:rgba(240,199,94,.4)">🆕 新模型</span>'}</h2>
+    <h2>${esc(m.name || m.id)} ${local?'<span class="tag think">✓ 本地已收录</span>':'<span class="tag" style="background:rgba(245,201,107,.15);color:var(--gold2);border-color:rgba(245,201,107,.4)">🆕 新模型</span>'}</h2>
     <div class="m-sub">${esc(m.id)} · OpenRouter 实时数据</div>
     <div class="m-grid">
       <div class="m-item"><div class="k">上下文窗口</div><div class="v">${Math.round((m.context_length||0)/1000)}K</div></div>
@@ -358,7 +374,7 @@ function showView(v){
 function openModal(id){
   const m = MODELS.find(x => x.id === id); if(!m) return;
   const tools = (m.tools||[]).map(tid => toolById[tid]).filter(Boolean);
-  const toolStr = tools.length ? tools.map(t => `<span class="tool-badge ${toolBadgeClass[t.id]||'other'}" style="cursor:default">${esc(t.name)}</span>`).join('') : '<span style="color:#5b6478">未内置任何 Agent 工具</span>';
+  const toolStr = tools.length ? tools.map(t => `<span class="tool-badge ${toolBadgeClass[t.id]||'other'}" style="cursor:default">${esc(t.name)}</span>`).join('') : '<span style="color:var(--dim)">未内置任何 Agent 工具</span>';
   document.getElementById('modalBody').innerHTML = `
     <button class="close" onclick="closeModal()">✕</button>
     <h2><span class="grade" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}</h2>
@@ -383,18 +399,24 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal();
 function buildFilters(){
   const grades = Object.keys(META.gradeDef);
   document.getElementById('gradeFilter').innerHTML =
-    `<span style="opacity:.7">等级</span>` +
+    `<span>等级</span>` +
     grades.map(g => `<button class="fbtn ${state.grade===g?'on':''}" data-k="grade" data-v="${g}">${g} ${META.gradeDef[g].label}</button>`).join('');
   const vendors = [...new Set(MODELS.map(m => m.vendor))].sort();
   document.getElementById('vendorFilter').innerHTML =
-    `<span style="opacity:.7">厂商</span>` +
+    `<span>厂商</span>` +
     vendors.map(v => `<button class="fbtn vendor-${v} ${state.vendor===v?'on':''}" data-k="vendor" data-v="${v}">${v}</button>`).join('');
   const mms = ['多模态','思考模式','1M上下文'];
   document.getElementById('mmFilter').innerHTML =
-    `<span style="opacity:.7">能力</span>` +
+    `<span>能力</span>` +
     mms.map(m => `<button class="fbtn ${state.mm===m?'on':''}" data-k="mm" data-v="${m}">${m}</button>`).join('');
   document.querySelectorAll('.fgroup button.fbtn').forEach(b => {
-    b.addEventListener('click', () => toggleFilter(b.dataset.k, b.dataset.v));
+    b.addEventListener('click', e => {
+      // ripple 反馈（ui-interaction：点击有位置反馈）
+      const rect = b.getBoundingClientRect();
+      b.style.setProperty('--rx', (e.clientX-rect.left)+'px');
+      b.style.setProperty('--ry', (e.clientY-rect.top)+'px');
+      toggleFilter(b.dataset.k, b.dataset.v);
+    });
   });
 }
 function toggleFilter(k, v){
@@ -403,20 +425,97 @@ function toggleFilter(k, v){
 }
 function syncFilterUI(){
   document.querySelectorAll('.fgroup button.fbtn').forEach(b => {
-    const k = b.dataset.k;
-    b.classList.toggle('on', b.dataset.v === state[k]);
+    b.classList.toggle('on', b.dataset.v === state[b.dataset.k]);
   });
 }
 
-/* ===== 统计 ===== */
+/* ===== 统计（数字滚动）===== */
 function renderStats(){
   const gs = Object.keys(META.gradeDef);
-  document.getElementById('hdStats').innerHTML = `
-    <span class="stat"><b>${MODELS.length}</b>个模型</span>
-    <span class="stat"><b>${TOOLS.length}</b>款 Agent 工具</span>
-    ${gs.map(g => `<span class="stat"><span style="color:${META.gradeDef[g].color};font-weight:800">${g}</span> × ${MODELS.filter(m=>m.grade===g).length}</span>`).join('')}
-    <span class="stat"><b>${MODELS.filter(m=>m.contextVal>=1000).length}</b>款支持 1M 上下文</span>
-    <span class="stat"><b>${MODELS.filter(m=>m.multimodal.includes('图像')).length}</b>款支持图像输入</span>`;
+  const items = [
+    {v: MODELS.length, lbl: '精选模型', cls:'gold'},
+    {v: TOOLS.length, lbl: 'Agent 工具', cls:'cyan'},
+    ...gs.map(g => ({v: MODELS.filter(m=>m.grade===g).length, lbl: `${g} 级`, cls: g==='S'?'gold':(g==='A'?'cyan':(g==='B'?'green':'gray'))})),
+    {v: MODELS.filter(m=>m.contextVal>=1000).length, lbl: '1M 上下文', cls:'violet'},
+    {v: MODELS.filter(m=>m.multimodal.includes('图像')).length, lbl: '图像输入', cls:'green'}
+  ];
+  document.getElementById('hdStats').innerHTML = items.map((it, i) =>
+    `<div class="stat scroll-reveal" style="animation-delay:${i*70}ms"><div class="num ${it.cls}" data-count="${it.v}">0</div><div class="lbl">${it.lbl}</div></div>`
+  ).join('');
+  // count-up 动画
+  const nums = document.querySelectorAll('.stat .num[data-count]');
+  nums.forEach(n => {
+    const target = parseInt(n.dataset.count);
+    const dur = 1100, t0 = performance.now();
+    const step = now => {
+      const p = Math.min(1, (now - t0)/dur);
+      const ease = 1 - Math.pow(1-p, 3);
+      n.textContent = Math.round(target * ease);
+      if(p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+/* ===== 动效系统（ui-motion 方法论）===== */
+let reducedMotion = false;
+try{ reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+
+/* scroll-reveal：IO 观察，进入视口渐入 */
+function initReveal(){
+  if(reducedMotion){ document.querySelectorAll('.scroll-reveal').forEach(el => el.classList.add('in')); return; }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  }, {threshold: .08, rootMargin: '0px 0px -40px 0px'});
+  document.querySelectorAll('.scroll-reveal').forEach(el => io.observe(el));
+}
+
+/* 卡片 3D tilt + 光标聚光：输入(pointer) → lerp 状态 → transform/CSS变量 */
+function initCardFX(){
+  if(reducedMotion) return;
+  const cards = document.querySelectorAll('.mcard, .toolcard');
+  cards.forEach(card => {
+    if(card.dataset.fx) return;
+    card.dataset.fx = '1';
+    let target = {x:0, y:0, mx:50, my:0};
+    let smooth = {x:0, y:0};
+    let raf = null;
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width;   // 0..1
+      const py = (e.clientY - r.top) / r.height;
+      target.x = (px - .5) * 8;                     // 最大 ±4°
+      target.y = (py - .5) * -8;
+      target.mx = px * 100; target.my = py * 100;
+      if(!raf){
+        raf = requestAnimationFrame(function tick(){
+          smooth.x += (target.x - smooth.x) * .14;  // lerp 系数
+          smooth.y += (target.y - smooth.y) * .14;
+          card.style.setProperty('--rx', smooth.x.toFixed(2)+'deg');
+          card.style.setProperty('--ry', smooth.y.toFixed(2)+'deg');
+          card.style.setProperty('--mx', target.mx+'%');
+          card.style.setProperty('--my', target.my+'%');
+          if(Math.abs(target.x - smooth.x) > .02 || Math.abs(target.y - smooth.y) > .02){
+            raf = requestAnimationFrame(tick);
+          } else { raf = null; }
+        });
+      }
+    });
+    card.addEventListener('mouseleave', () => {
+      target = {x:0, y:0, mx:50, my:0};
+      if(raf){ cancelAnimationFrame(raf); raf = null; }
+      card.style.setProperty('--rx','0deg');
+      card.style.setProperty('--ry','0deg');
+    });
+  });
+  // 上下文条展开动画
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.mcard .mc-ctx').forEach((el, i) => {
+      setTimeout(() => el.classList.add('ctx-in'), 150 + i*35);
+    });
+  });
 }
 
 /* ===== 初始化 ===== */
@@ -425,4 +524,5 @@ document.getElementById('sortBox').addEventListener('change', e => { state.sort 
 renderStats();
 buildFilters();
 renderModels();
-fetchLive();  // 异步拉取实时模型，失败自动隐藏 tab
+setTimeout(initReveal, 300);
+fetchLive();

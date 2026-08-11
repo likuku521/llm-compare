@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大模型多维对比总览</title>
+<style>
+/* ============================================================
+   Design System — Dark OLED × Liquid Glass（黑金液态玻璃）
+   参考 ui-ux-pro-max: #7 Dark Mode (OLED) + #3 Glassmorphism + #14 Liquid Glass
+   主调：深黑 #0A0E1A + 金色 #F0C75E 高级感 + 青色 #53D8FF 数据辅助
+   ============================================================ */
+:root{
+  /* 基底 */
+  --bg:#0A0E1A; --bg2:#0E1424; --bg3:#131B2E;
+  --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.075);
+  --glass-border:rgba(255,255,255,.10);
+  --ink:#F2F4FA; --muted:#8B93A7; --dim:#5B6478;
+  /* 品牌 */
+  --gold:#F0C75E; --gold2:#FFD98A; --gold-dim:rgba(240,199,94,.14);
+  --cyan:#53D8FF; --cyan-dim:rgba(83,216,255,.12);
+  /* 数据分级 */
+  --s:#F0C75E; --a:#53D8FF; --b:#3DDC97; --c:#6B7A99;
+  --s-dim:rgba(240,199,94,.15); --a-dim:rgba(83,216,255,.13);
+  --b-dim:rgba(61,220,151,.12); --c-dim:rgba(107,122,153,.12);
+  --ok:#3DDC97; --warn:#FFB020; --danger:#FF5470;
+  --radius:14px; --radius-lg:20px;
+  --shadow:0 8px 40px rgba(0,0,0,.45);
+  --font:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+/* 背景光晕：黑金氛围 */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(900px 500px at 85% -10%, rgba(240,199,94,.07), transparent 60%),
+    radial-gradient(700px 500px at -10% 30%, rgba(83,216,255,.05), transparent 55%),
+    radial-gradient(600px 400px at 50% 110%, rgba(240,199,94,.04), transparent 60%);}
+a{color:var(--cyan);text-decoration:none}
+
+/* ===== Header（玻璃悬浮条）===== */
+header{position:sticky;top:12px;z-index:50;max-width:1280px;margin:14px auto 0;padding:16px 24px;
+  background:rgba(14,20,36,.72);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid var(--glass-border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.hd-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo-badge{width:46px;height:46px;border-radius:13px;flex-shrink:0;
+  background:linear-gradient(135deg,#F0C75E,#E89B3C 55%,#B8741F);
+  display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#0A0E1A;
+  box-shadow:0 0 24px rgba(240,199,94,.35),inset 0 1px 0 rgba(255,255,255,.4)}
+h1{font-size:23px;font-weight:800;letter-spacing:.3px;
+  background:linear-gradient(90deg,#FFE9A8,#F0C75E 45%,#C9A54A);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hd-meta{margin-top:5px;color:var(--muted);font-size:12.5px;display:flex;gap:16px;flex-wrap:wrap}
+.hd-meta .dot{color:var(--gold)}
+.hd-stats{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.stat{background:var(--card);border:1px solid var(--glass-border);border-radius:10px;padding:7px 14px;font-size:12.5px;color:var(--muted);backdrop-filter:blur(8px)}
+.stat b{color:var(--ink);font-size:15px;margin-right:4px;font-weight:700}
+.stat .gs{font-weight:800;margin-right:2px}
+
+/* ===== Filter bar ===== */
+.filters{max-width:1280px;margin:14px auto 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:0 6px}
+.fgroup{display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--glass-border);border-radius:12px;padding:5px 10px;font-size:12.5px;color:var(--muted);backdrop-filter:blur(10px)}
+.fgroup>span{opacity:.65;margin-right:2px}
+.fgroup .fbtn{cursor:pointer;padding:4px 10px;border-radius:8px;transition:all .18s;white-space:nowrap;background:none;border:none;color:var(--muted);font-size:12.5px;font-family:inherit;line-height:inherit}
+.fgroup .fbtn:hover{background:var(--card2);color:var(--ink)}
+.fgroup .fbtn.on{background:var(--gold-dim);color:var(--gold2);font-weight:700;box-shadow:inset 0 0 0 1px rgba(240,199,94,.4),0 0 14px rgba(240,199,94,.12)}
+.fgroup .fbtn.on.vendor-美国{background:var(--cyan-dim);color:var(--cyan);box-shadow:inset 0 0 0 1px rgba(83,216,255,.4),0 0 14px rgba(83,216,255,.12)}
+.fgroup .fbtn.on.vendor-中国{background:rgba(255,84,112,.13);color:#FF8BA0;box-shadow:inset 0 0 0 1px rgba(255,84,112,.4)}
+.searchbox{flex:1;min-width:220px;background:var(--card);border:1px solid var(--glass-border);border-radius:12px;padding:9px 16px;color:var(--ink);font-size:13.5px;outline:none;transition:all .2s;backdrop-filter:blur(10px)}
+.searchbox::placeholder{color:var(--dim)}
+.searchbox:focus{border-color:rgba(240,199,94,.5);box-shadow:0 0 0 3px rgba(240,199,94,.1)}
+.sortbox{background:var(--card);border:1px solid var(--glass-border);border-radius:12px;padding:8px 12px;color:var(--ink);font-size:12.5px;outline:none;cursor:pointer;backdrop-filter:blur(10px)}
+.sortbox option{background:#0E1424}
+
+/* ===== View tabs ===== */
+.viewtabs{max-width:1280px;margin:16px auto 0;padding:0 6px;display:flex;gap:8px}
+.viewtab{padding:9px 22px;border-radius:11px;border:1px solid var(--glass-border);background:var(--card);color:var(--muted);cursor:pointer;font-size:13.5px;font-weight:600;transition:all .2s;backdrop-filter:blur(10px)}
+.viewtab:hover{color:var(--ink);border-color:rgba(255,255,255,.2)}
+.viewtab.on{background:linear-gradient(135deg,rgba(240,199,94,.92),rgba(232,155,60,.92));color:#0A0E1A;font-weight:800;border-color:transparent;box-shadow:0 4px 24px rgba(240,199,94,.3)}
+
+/* ===== Table view ===== */
+main{max-width:1280px;margin:16px auto 48px;padding:0 6px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--glass-border);border-radius:var(--radius-lg);background:var(--card);backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;min-width:1080px;font-size:13px}
+thead th{background:rgba(10,14,26,.6);color:var(--muted);text-align:left;padding:12px 14px;font-weight:600;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid var(--glass-border);position:sticky;top:0;z-index:5;backdrop-filter:blur(10px)}
+tbody td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+tbody tr{transition:background .18s;cursor:pointer}
+tbody tr:hover{background:rgba(240,199,94,.05)}
+tbody tr:last-child td{border-bottom:none}
+.m-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:9px;white-space:nowrap}
+.m-name .flag{font-size:12px;opacity:.8}
+.m-vendor{color:var(--muted);font-size:12px;white-space:nowrap}
+.grade{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:9px;font-weight:800;font-size:13px;color:#0A0E1A;flex-shrink:0;box-shadow:0 0 16px rgba(255,255,255,.08)}
+.ctx-cell{min-width:132px}
+.ctxbar{display:flex;align-items:center;gap:9px}
+.ctxbar .bar{width:82px;height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;flex-shrink:0}
+.ctxbar .fill{height:100%;background:linear-gradient(90deg,#F0C75E,#E89B3C);border-radius:4px;box-shadow:0 0 8px rgba(240,199,94,.4)}
+.ctxbar .txt{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.mm{display:flex;gap:4px;flex-wrap:wrap}
+.mm i{font-style:normal;font-size:11px;padding:2px 8px;border-radius:7px;background:var(--card2);border:1px solid var(--glass-border);color:var(--muted);white-space:nowrap}
+.mm i.img{color:#B79CFF;border-color:rgba(183,156,255,.35);background:rgba(183,156,255,.08)}
+.mm i.aud{color:var(--b);border-color:rgba(61,220,151,.35);background:rgba(61,220,151,.07)}
+.mm i.vid{color:#FF8BA0;border-color:rgba(255,139,160,.35);background:rgba(255,139,160,.07)}
+.tag{display:inline-block;font-size:11px;padding:2px 9px;border-radius:7px;margin:1px 3px 1px 0;background:rgba(255,255,255,.05);color:#A8B4CC;border:1px solid rgba(255,255,255,.08);white-space:nowrap}
+.tag.think{background:rgba(240,199,94,.1);color:var(--gold2);border-color:rgba(240,199,94,.3)}
+.cost{font-size:12px;white-space:nowrap;font-weight:600}
+.cost.low{color:var(--b)} .cost.mid{color:var(--warn)} .cost.high{color:var(--danger)}
+.toolcell{display:flex;gap:4px;flex-wrap:wrap}
+.tool-badge{font-size:11px;padding:2px 8px;border-radius:7px;white-space:nowrap;cursor:help;font-weight:600}
+.tool-badge.wb{background:rgba(61,220,151,.1);color:#6FE8B8;border:1px solid rgba(61,220,151,.35)}
+.tool-badge.qd{background:rgba(255,139,160,.1);color:#FFA3B5;border:1px solid rgba(255,139,160,.35)}
+.tool-badge.tr{background:rgba(83,216,255,.1);color:#8FE3FF;border:1px solid rgba(83,216,255,.35)}
+.tool-badge.cs{background:rgba(183,156,255,.1);color:#C9B5FF;border:1px solid rgba(183,156,255,.35)}
+.tool-badge.cc{background:rgba(255,176,32,.1);color:#FFC966;border:1px solid rgba(255,176,32,.35)}
+.tool-badge.gc{background:rgba(83,216,255,.08);color:#9FEAFF;border:1px solid rgba(83,216,255,.3)}
+.tool-badge.cx{background:rgba(61,220,151,.08);color:#7FEBC4;border:1px solid rgba(61,220,151,.3)}
+.tool-badge.cp{background:rgba(255,255,255,.06);color:#C4CFE4;border:1px solid rgba(255,255,255,.15)}
+.tool-badge.ws{background:rgba(240,199,94,.08);color:#FFD98A;border:1px solid rgba(240,199,94,.3)}
+.tool-badge.other{background:rgba(255,255,255,.05);color:#A8B4CC;border:1px solid rgba(255,255,255,.1)}
+
+/* ===== Empty state ===== */
+.empty{text-align:center;padding:70px 20px;color:var(--muted)}
+.empty b{display:block;font-size:17px;color:var(--ink);margin-bottom:6px}
+
+/* ===== Tool view ===== */
+.toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:16px}
+.toolcard{background:var(--card);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:20px;transition:all .25s;backdrop-filter:blur(14px);position:relative;overflow:hidden}
+.toolcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
+  background:radial-gradient(400px 200px at 90% 0%,rgba(240,199,94,.08),transparent 60%)}
+.toolcard:hover{transform:translateY(-4px);border-color:rgba(240,199,94,.35);box-shadow:0 12px 48px rgba(0,0,0,.5),0 0 24px rgba(240,199,94,.06)}
+.toolcard:hover::before{opacity:1}
+.toolcard h3{font-size:16.5px;font-weight:800;display:flex;align-items:center;gap:9px}
+.toolcard .t-sub{color:var(--muted);font-size:12px;margin:3px 0 11px}
+.toolcard .t-desc{font-size:13px;color:#C6CEDF;margin-bottom:11px}
+.toolcard .t-mode{font-size:12px;color:var(--muted);margin-bottom:8px}
+.toolcard .t-mode b{color:var(--gold2);font-weight:600}
+.toolcard .t-models{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.toolcard .t-models .tm{font-size:12px;padding:5px 11px;border-radius:9px;background:var(--card2);border:1px solid var(--glass-border);cursor:pointer;transition:all .18s;font-weight:600}
+.toolcard .t-models .tm:hover{border-color:var(--gold);color:var(--gold2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(240,199,94,.15)}
+.toolcard .t-hl{margin-top:11px;font-size:12px;color:var(--gold2);background:var(--gold-dim);border:1px solid rgba(240,199,94,.25);border-radius:9px;padding:7px 11px;line-height:1.7}
+.toolcard .t-src{margin-top:9px;font-size:11px;color:var(--dim)}
+
+/* ===== Modal（玻璃弹窗）===== */
+.modal-mask{position:fixed;inset:0;background:rgba(6,9,18,.7);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(10px)}
+.modal-mask.show{display:flex}
+.modal{background:linear-gradient(165deg,rgba(19,27,46,.96),rgba(14,20,36,.96));border:1px solid rgba(240,199,94,.2);border-radius:22px;max-width:660px;width:100%;max-height:88vh;overflow-y:auto;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 40px rgba(240,199,94,.05);animation:pop .28s cubic-bezier(.22,1.2,.36,1)}
+@keyframes pop{from{transform:scale(.94) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal h2{font-size:21px;font-weight:800;display:flex;align-items:center;gap:11px;margin-bottom:5px}
+.modal .m-sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+.m-sec{margin:15px 0}
+.m-sec h4{font-size:12px;color:var(--gold);margin-bottom:7px;font-weight:700;letter-spacing:.4px;display:flex;align-items:center;gap:6px}
+.m-sec .m-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.m-sec p{font-size:13.5px;color:#C6CEDF;line-height:1.75}
+.m-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0}
+.m-item{background:var(--card);border:1px solid var(--glass-border);border-radius:12px;padding:11px 13px;backdrop-filter:blur(8px)}
+.m-item .k{font-size:11px;color:var(--muted)}
+.m-item .v{font-size:14.5px;font-weight:700;margin-top:2px}
+.modal .close{position:sticky;top:0;float:right;width:34px;height:34px;border-radius:10px;background:var(--card2);border:1px solid var(--glass-border);color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;margin-left:8px}
+.modal .close:hover{color:#fff;border-color:var(--danger);background:rgba(255,84,112,.12)}
+
+/* ===== Footer ===== */
+footer{max-width:1280px;margin:0 auto 44px;padding:0 6px;color:var(--dim);font-size:12px}
+footer .src{background:var(--card);border:1px solid var(--glass-border);border-radius:14px;padding:14px 18px;margin-top:10px;backdrop-filter:blur(10px)}
+footer .src h5{color:var(--muted);font-size:12px;margin-bottom:5px}
+footer .src p{margin:2px 0}
+
+/* ===== Responsive ===== */
+@media (max-width:900px){
+  header{top:8px;margin:8px 10px 0;padding:14px 16px}
+  h1{font-size:18px}
+  .filters{padding:0 10px}
+  main{padding:0 10px}
+  .hd-meta{flex-direction:column;gap:4px}
+  .toolgrid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd-inner">
+    <div class="hd-top">
+      <div class="logo-badge">AI</div>
+      <div>
+        <h1>大模型多维对比总览</h1>
+        <div class="hd-meta">
+          <span>数据更新：<span class="dot">2026-08-11</span></span>
+          <span>来源：各厂商官方文档 / 官网</span>
+          <span>点行查看详情 · 支持筛选排序</span>
+        </div>
+      </div>
+    </div>
+    <div class="hd-stats" id="hdStats"></div>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="searchbox-wrap" style="flex:1;min-width:220px">
+    <input class="searchbox" id="searchBox" placeholder="🔍 搜索模型名 / 厂商 / 擅长领域，如 Kimi、1M、前端、办公…">
+  </div>
+  <div class="fgroup" id="gradeFilter"></div>
+  <div class="fgroup" id="vendorFilter"></div>
+  <div class="fgroup" id="mmFilter"></div>
+  <select class="sortbox" id="sortBox">
+    <option value="grade">按综合等级</option>
+    <option value="context">按上下文长度</option>
+    <option value="name">按名称</option>
+  </select>
+</div>
+
+<div class="viewtabs">
+  <div class="viewtab on" id="tabModels" onclick="showView('models')">📊 模型总览</div>
+  <div class="viewtab" id="tabTools" onclick="showView('tools')">🛠️ Agent 工具内置模型</div>
+</div>
+
+<main id="main"></main>
+
+<footer>
+  <div class="src">
+    <h5>📌 数据说明</h5>
+    <p>· 数据截至 2026-08-11，来自各厂商官方文档/官网（WorkBuddy / Qoder / TRAE / Cursor / Anthropic / OpenAI / Google 等）。</p>
+    <p>· 等级分级为综合参考（能力/速度/生态），非官方评分；上下文、多模态、费用以官方最新为准。</p>
+    <p>· 模型能力更新快，若与官方有出入请以厂商为准。</p>
+  </div>
+</footer>
+
+<div class="modal-mask" id="modalMask" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script id="app-data" type="application/json">{
+ "meta": {
+  "title": "大模型多维对比总览",
+  "subtitle": "性能 · 上下文 · 多模态 · 场景 · 擅长领域 · Agent 工具内置模型 — 一眼分辨",
+  "updated": "2026-08-11",
+  "gradeDef": {
+   "S": {
+    "label": "旗舰",
+    "color": "#e94560",
+    "desc": "综合能力第一梯队"
+   },
+   "A": {
+    "label": "优秀",
+    "color": "#f59e0b",
+    "desc": "能力突出，性价比之选"
+   },
+   "B": {
+    "label": "良好",
+    "color": "#10b981",
+    "desc": "日常任务稳定"
+   },
+   "C": {
+    "label": "入门",
+    "color": "#64748b",
+    "desc": "轻量/专用场景"
+   }
+  },
+  "sceneTags": {
+   "通用对话": "日常问答、闲聊、信息查询",
+   "深度推理": "复杂逻辑、数学、多步推理",
+   "代码": "代码生成、补全、调试、重构",
+   "多模态理解": "图片/音频/视频内容理解",
+   "长文档": "长文本阅读、总结、分析",
+   "办公": "文档/表格/PPT/邮件等办公任务",
+   "Agent": "工具调用、自主任务执行",
+   "中文": "中文理解与生成优化",
+   "创作": "写作、文案、内容生成",
+   "搜索": "联网检索与信息整合"
+  },
+  "gradeScore": {
+   "S": 5,
+   "A": 4,
+   "B": 3,
+   "C": 2
+  }
+ },
+ "models": [
+  {
+   "id": "gpt-5.2",
+   "name": "GPT-5.2",
+   "vendor": "OpenAI",
+   "vendorCn": "OpenAI",
+   "country": "美国",
+   "grade": "S",
+   "context": "400K",
+   "contextVal": 400,
+   "multimodal": [
+    "文本",
+    "图像",
+    "音频"
+   ],
+   "thinking": true,
+   "cost": "高",
+   "scenes": [
+    "通用对话",
+    "深度推理",
+    "代码",
+    "多模态理解",
+    "Agent"
+   ],
+   "strengths": [
+    "综合能力天花板",
+    "推理",
+    "工具调用",
+    "Agent 任务"
+   ],
+   "bestFor": "综合全能旗舰，复杂推理与 Agent 编排首选",
+   "notes": "OpenAI 旗舰系列，广泛用于 Claude Code / Codex 等 Agent 工具的默认主力",
+   "tools": [
+    "cursor",
+    "codex",
+    "copilot"
+   ]
+  },
+  {
+   "id": "gpt-5.2-mini",
+   "name": "GPT-5.2-mini",
+   "vendor": "OpenAI",
+   "vendorCn": "OpenAI",
+   "country": "美国",
+   "grade": "A",
+   "context": "400K",
+   "contextVal": 400,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "日常对话",
+    "快速任务",
+    "代码",
+    "性价比"
+   ],
+   "strengths": [
+    "速度快",
+    "性价比高",
+    "日常任务稳"
+   ],
+   "bestFor": "日常高频任务与快速响应的性价比之选",
+   "notes": "轻量版旗舰，适合成本敏感的场景",
+   "tools": [
+    "cursor",
+    "codex",
+    "copilot"
+   ]
+  },
+  {
+   "id": "claude-4.6",
+   "name": "Claude 4.6 Sonnet",
+   "vendor": "Anthropic",
+   "vendorCn": "Anthropic",
+   "country": "美国",
+   "grade": "S",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "高",
+   "scenes": [
+    "代码",
+    "长文档",
+    "Agent",
+    "写作"
+   ],
+   "strengths": [
+    "代码能力",
+    "长上下文",
+    "Agent 稳定性",
+    "写作质量"
+   ],
+   "bestFor": "程序员与 Agent 工具首选，长上下文 + 稳定工具调用",
+   "notes": "Claude Code 的默认主力，被公认为 Agent 场景标杆",
+   "tools": [
+    "cursor",
+    "claude-code",
+    "windsurf"
+   ]
+  },
+  {
+   "id": "claude-4.5",
+   "name": "Claude 4.5 Sonnet",
+   "vendor": "Anthropic",
+   "vendorCn": "Anthropic",
+   "country": "美国",
+   "grade": "A",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "中",
+   "scenes": [
+    "代码",
+    "长文档",
+    "日常任务"
+   ],
+   "strengths": [
+    "代码能力",
+    "长上下文",
+    "稳定"
+   ],
+   "bestFor": "上一代主力，长上下文任务依然能打",
+   "notes": "被 4.6 逐步取代，仍广泛用于各种工具",
+   "tools": [
+    "cursor",
+    "claude-code",
+    "windsurf"
+   ]
+  },
+  {
+   "id": "gemini-3-pro",
+   "name": "Gemini 3 Pro",
+   "vendor": "Google",
+   "vendorCn": "Google",
+   "country": "美国",
+   "grade": "S",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本",
+    "图像",
+    "音频",
+    "视频"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "多模态",
+    "长上下文",
+    "搜索",
+    "代码",
+    "视频理解"
+   ],
+   "strengths": [
+    "多模态最全",
+    "1M 上下文",
+    "Google 生态",
+    "视频理解"
+   ],
+   "bestFor": "多模态与超长上下文场景之王",
+   "notes": "原生多模态，视频/音频输入能力业界领先",
+   "tools": [
+    "gemini-cli",
+    "cursor"
+   ]
+  },
+  {
+   "id": "deepseek-v4",
+   "name": "DeepSeek-V4",
+   "vendor": "深度求索",
+   "vendorCn": "深度求索",
+   "country": "中国",
+   "grade": "S",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": true,
+   "cost": "低",
+   "scenes": [
+    "代码",
+    "推理",
+    "长上下文",
+    "中文"
+   ],
+   "strengths": [
+    "代码",
+    "数学推理",
+    "中文",
+    "超高性价比"
+   ],
+   "bestFor": "中文用户 + 代码 + 预算有限的首选旗舰",
+   "notes": "旗舰模型支持 1M 上下文，速度快；开源生态强",
+   "tools": [
+    "workbuddy",
+    "cursor",
+    "qoder"
+   ]
+  },
+  {
+   "id": "deepseek-v4-pro",
+   "name": "DeepSeek-V4-Pro",
+   "vendor": "深度求索",
+   "vendorCn": "深度求索",
+   "country": "中国",
+   "grade": "S",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "深度推理",
+    "代码",
+    "长文档",
+    "研究"
+   ],
+   "strengths": [
+    "深度推理更强",
+    "代码",
+    "1M 上下文"
+   ],
+   "bestFor": "需要更深度推理的旗舰任务",
+   "notes": "V4 的高推理版本，速度略慢",
+   "tools": [
+    "workbuddy",
+    "cursor"
+   ]
+  },
+  {
+   "id": "deepseek-v4-flash",
+   "name": "DeepSeek-V4-Flash",
+   "vendor": "深度求索",
+   "vendorCn": "深度求索",
+   "country": "中国",
+   "grade": "A",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": true,
+   "cost": "低",
+   "scenes": [
+    "编程",
+    "代码生成",
+    "长上下文",
+    "高并发"
+   ],
+   "strengths": [
+    "纯文本编程强",
+    "速度优先",
+    "1M 上下文",
+    "性价比"
+   ],
+   "bestFor": "编程性价比之王——纯文本代码能力强，1M 上下文 + 速度优先",
+   "notes": "WorkBuddy 内置正式版。纯文本编程能力强，但不支持多模态（无图像输入）；注意选正式版，预览版能力更弱且价格更高",
+   "tools": [
+    "workbuddy",
+    "qoder"
+   ]
+  },
+  {
+   "id": "hy3",
+   "name": "混元 Hy3",
+   "vendor": "腾讯",
+   "vendorCn": "腾讯混元",
+   "country": "中国",
+   "grade": "B",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "基础办公",
+    "报表整理",
+    "文件归类",
+    "简单任务"
+   ],
+   "strengths": [
+    "免费",
+    "基础办公",
+    "中文"
+   ],
+   "bestFor": "免费白嫖款——简单报表整理、文件归类等基础办公任务够用",
+   "notes": "WorkBuddy 内置限时免费。官方标图片输入+思考模式，但实测能力有限，仅能胜任简单报表整理类基础任务，复杂推理别指望它",
+   "tools": [
+    "workbuddy"
+   ]
+  },
+  {
+   "id": "glm-5.2",
+   "name": "GLM-5.2",
+   "vendor": "智谱 AI",
+   "vendorCn": "智谱AI",
+   "country": "中国",
+   "grade": "A",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": true,
+   "cost": "高",
+   "scenes": [
+    "长文档分析",
+    "长程任务",
+    "万字合同报告",
+    "代码"
+   ],
+   "strengths": [
+    "1M 上下文",
+    "长程任务",
+    "能力强"
+   ],
+   "bestFor": "长文档/长程任务专家——1M 上下文扛万字材料，能力强但费用偏高",
+   "notes": "WorkBuddy 内置。官方标图片输入，但实测按纯文本用；能力强但性价比低，适合预算充足的 1M 长上下文场景",
+   "tools": [
+    "workbuddy",
+    "cursor"
+   ]
+  },
+  {
+   "id": "glm-5.1",
+   "name": "GLM-5.1",
+   "vendor": "智谱 AI",
+   "vendorCn": "智谱AI",
+   "country": "中国",
+   "grade": "C",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": true,
+   "cost": "低",
+   "scenes": [
+    "过渡",
+    "备用"
+   ],
+   "strengths": [
+    "能力均衡"
+   ],
+   "bestFor": "不推荐主力——版本老旧、知识体系残缺",
+   "notes": "WorkBuddy 内置。因版本老旧、知识体系残缺，完全不建议使用",
+   "tools": [
+    "workbuddy"
+   ]
+  },
+  {
+   "id": "glm-5v-turbo",
+   "name": "GLM-5v-Turbo",
+   "vendor": "智谱 AI",
+   "vendorCn": "智谱AI",
+   "country": "中国",
+   "grade": "C",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "过渡",
+    "备用"
+   ],
+   "strengths": [
+    "原生多模态"
+   ],
+   "bestFor": "不推荐主力——版本老旧、知识体系残缺",
+   "notes": "WorkBuddy 内置。官方标原生多模态，但版本老旧、知识体系残缺，不建议使用",
+   "tools": [
+    "workbuddy"
+   ]
+  },
+  {
+   "id": "minimax-m3",
+   "name": "MiniMax-M3",
+   "vendor": "MiniMax",
+   "vendorCn": "MiniMax",
+   "country": "中国",
+   "grade": "C",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像",
+    "音频"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "忽略"
+   ],
+   "strengths": [
+    "原生多模态"
+   ],
+   "bestFor": "无实用价值，可直接忽略",
+   "notes": "WorkBuddy 内置。官方标原生多模态/擅长代码智能体，但实测无实用价值，多模态与代码均有更好替代，直接忽略",
+   "tools": [
+    "workbuddy"
+   ]
+  },
+  {
+   "id": "minimax-m27",
+   "name": "MiniMax-m2.7",
+   "vendor": "MiniMax",
+   "vendorCn": "MiniMax",
+   "country": "中国",
+   "grade": "B",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "低",
+   "scenes": [
+    "日常任务",
+    "轻量使用"
+   ],
+   "strengths": [
+    "能力均衡",
+    "性价比高"
+   ],
+   "bestFor": "日常轻量任务的过渡选择",
+   "notes": "WorkBuddy 内置。能力均衡适合日常，但同类已更新，仅轻量场景可用",
+   "tools": [
+    "workbuddy"
+   ]
+  },
+  {
+   "id": "kimi-k3",
+   "name": "Kimi-K3",
+   "vendor": "月之暗面",
+   "vendorCn": "月之暗面",
+   "country": "中国",
+   "grade": "S",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "高",
+   "scenes": [
+    "复杂长程任务",
+    "前端开发",
+    "科研推理"
+   ],
+   "strengths": [
+    "智力天花板",
+    "长程自主",
+    "前端开发",
+    "科研推理"
+   ],
+   "bestFor": "智力天花板——复杂长程自主任务/前端/科研推理最强，但成本极高",
+   "notes": "WorkBuddy 内置。当前智力最高的模型，长程自主+前端+科研表现突出；使用成本极高，预算充足才上",
+   "tools": [
+    "workbuddy",
+    "cursor"
+   ]
+  },
+  {
+   "id": "kimi-k2.7-code",
+   "name": "Kimi-K2.7-Code",
+   "vendor": "月之暗面",
+   "vendorCn": "月之暗面",
+   "country": "中国",
+   "grade": "C",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "中",
+   "scenes": [
+    "编程过渡"
+   ],
+   "strengths": [
+    "面向编程优化"
+   ],
+   "bestFor": "编程场景过渡选择，不建议主力",
+   "notes": "WorkBuddy 内置。面向编程优化，但版本老旧、能力一般，不建议主力使用",
+   "tools": [
+    "workbuddy"
+   ]
+  },
+  {
+   "id": "kimi-k2.6",
+   "name": "Kimi-K2.6",
+   "vendor": "月之暗面",
+   "vendorCn": "月之暗面",
+   "country": "中国",
+   "grade": "C",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "日常轻量"
+   ],
+   "strengths": [
+    "多模态"
+   ],
+   "bestFor": "日常轻量任务可用，不建议主力",
+   "notes": "WorkBuddy 内置。版本老旧、能力一般，不建议主力使用",
+   "tools": [
+    "workbuddy"
+   ]
+  },
+  {
+   "id": "qwen-3.8-max",
+   "name": "Qwen3.8-Max",
+   "vendor": "阿里",
+   "vendorCn": "通义千问",
+   "country": "中国",
+   "grade": "S",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "代码工程",
+    "专业办公",
+    "深度推理",
+    "中文"
+   ],
+   "strengths": [
+    "代码工程",
+    "专业办公",
+    "深度推理",
+    "2.4T 参数"
+   ],
+   "bestFor": "中文办公 + 代码工程 + 深度推理",
+   "notes": "通义千问最新旗舰，2.4T 参数，Qoder 全端首发支持",
+   "tools": [
+    "qoder"
+   ]
+  },
+  {
+   "id": "qwen-3.7-max",
+   "name": "Qwen3.7-Max",
+   "vendor": "阿里",
+   "vendorCn": "通义千问",
+   "country": "中国",
+   "grade": "A",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "代码",
+    "办公",
+    "中文",
+    "推理"
+   ],
+   "strengths": [
+    "上一代旗舰",
+    "代码",
+    "中文"
+   ],
+   "bestFor": "前代旗舰，仍能打的中文全能",
+   "notes": "Qwen3.8-Max 上一代旗舰",
+   "tools": [
+    "qoder"
+   ]
+  },
+  {
+   "id": "qwen-3.5",
+   "name": "Qwen3.5",
+   "vendor": "阿里",
+   "vendorCn": "通义千问",
+   "country": "中国",
+   "grade": "A",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "低",
+   "scenes": [
+    "代码",
+    "办公",
+    "中文",
+    "性价比"
+   ],
+   "strengths": [
+    "开源生态",
+    "中文",
+    "性价比"
+   ],
+   "bestFor": "开源自部署 + 中文性价比",
+   "notes": "Qwen 开源系列，被广泛私有化部署",
+   "tools": [
+    "qoder"
+   ]
+  },
+  {
+   "id": "seed-2.1-turbo",
+   "name": "Seed-2.1-Turbo",
+   "vendor": "字节跳动",
+   "vendorCn": "字节跳动",
+   "country": "中国",
+   "grade": "A",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "办公",
+    "代码",
+    "通用任务",
+    "TRAE 生态"
+   ],
+   "strengths": [
+    "速度",
+    "办公",
+    "字节生态"
+   ],
+   "bestFor": "TRAE 生态内的日常主力",
+   "notes": "Seed 系列旗舰，TRAE 会员享 2.5 折计费",
+   "tools": [
+    "trae"
+   ]
+  },
+  {
+   "id": "seed-code",
+   "name": "Seed-Code",
+   "vendor": "字节跳动",
+   "vendorCn": "字节跳动",
+   "country": "中国",
+   "grade": "A",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": true,
+   "cost": "中",
+   "scenes": [
+    "代码",
+    "编程 Agent",
+    "TRAE 生态"
+   ],
+   "strengths": [
+    "代码专用",
+    "编程 Agent"
+   ],
+   "bestFor": "TRAE 内代码任务专用",
+   "notes": "字节代码专用模型，TRAE 内置",
+   "tools": [
+    "trae"
+   ]
+  },
+  {
+   "id": "doubao-3",
+   "name": "豆包 3",
+   "vendor": "字节跳动",
+   "vendorCn": "字节跳动",
+   "country": "中国",
+   "grade": "A",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像",
+    "音频",
+    "视频"
+   ],
+   "thinking": true,
+   "cost": "低",
+   "scenes": [
+    "办公",
+    "多模态",
+    "创作",
+    "中文",
+    "性价比"
+   ],
+   "strengths": [
+    "多模态全",
+    "性价比",
+    "字节生态"
+   ],
+   "bestFor": "中文多模态 + 内容创作 + 性价比",
+   "notes": "字节主力消费级模型，生态完整",
+   "tools": [
+    "trae"
+   ]
+  },
+  {
+   "id": "glm-4.6",
+   "name": "GLM-4.6",
+   "vendor": "智谱 AI",
+   "vendorCn": "智谱AI",
+   "country": "中国",
+   "grade": "B",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "日常任务",
+    "中文",
+    "性价比"
+   ],
+   "strengths": [
+    "中文稳定",
+    "性价比"
+   ],
+   "bestFor": "预算敏感的中文日常任务",
+   "notes": "前代主力，仍广泛使用",
+   "tools": []
+  },
+  {
+   "id": "gemini-3-flash",
+   "name": "Gemini 3 Flash",
+   "vendor": "Google",
+   "vendorCn": "Google",
+   "country": "美国",
+   "grade": "A",
+   "context": "1M",
+   "contextVal": 1000,
+   "multimodal": [
+    "文本",
+    "图像",
+    "音频",
+    "视频"
+   ],
+   "thinking": true,
+   "cost": "低",
+   "scenes": [
+    "多模态",
+    "快速任务",
+    "长上下文",
+    "性价比"
+   ],
+   "strengths": [
+    "速度",
+    "多模态",
+    "1M 上下文",
+    "性价比"
+   ],
+   "bestFor": "多模态 + 长上下文 + 成本敏感",
+   "notes": "Flash 系列性价比高，多模态能力完整",
+   "tools": [
+    "gemini-cli"
+   ]
+  },
+  {
+   "id": "claude-haiku-4.5",
+   "name": "Claude Haiku 4.5",
+   "vendor": "Anthropic",
+   "vendorCn": "Anthropic",
+   "country": "美国",
+   "grade": "B",
+   "context": "200K",
+   "contextVal": 200,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "快速任务",
+    "日常",
+    "性价比"
+   ],
+   "strengths": [
+    "速度快",
+    "成本低"
+   ],
+   "bestFor": "低延迟高性价比任务",
+   "notes": "轻量版，适合高并发",
+   "tools": [
+    "cursor",
+    "claude-code"
+   ]
+  },
+  {
+   "id": "gpt-4.5",
+   "name": "GPT-4.5",
+   "vendor": "OpenAI",
+   "vendorCn": "OpenAI",
+   "country": "美国",
+   "grade": "A",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "中",
+   "scenes": [
+    "通用对话",
+    "代码",
+    "写作"
+   ],
+   "strengths": [
+    "综合稳定",
+    "对话自然"
+   ],
+   "bestFor": "前代旗舰，通用任务仍然可靠",
+   "notes": "前代旗舰，逐步让位于 GPT-5.x",
+   "tools": [
+    "cursor",
+    "copilot"
+   ]
+  },
+  {
+   "id": "kimi-k2.5",
+   "name": "Kimi-K2.5",
+   "vendor": "月之暗面",
+   "vendorCn": "月之暗面",
+   "country": "中国",
+   "grade": "B",
+   "context": "256K",
+   "contextVal": 256,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "文档",
+    "长文本",
+    "中文"
+   ],
+   "strengths": [
+    "长文本",
+    "中文",
+    "文档处理"
+   ],
+   "bestFor": "中文长文档处理",
+   "notes": "长文本能力强的口碑款",
+   "tools": []
+  },
+  {
+   "id": "ernie-5",
+   "name": "文心 5",
+   "vendor": "百度",
+   "vendorCn": "百度",
+   "country": "中国",
+   "grade": "B",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "中",
+   "scenes": [
+    "搜索",
+    "中文",
+    "办公"
+   ],
+   "strengths": [
+    "百度搜索生态",
+    "中文"
+   ],
+   "bestFor": "百度生态内中文任务",
+   "notes": "依托搜索生态，中文场景稳定",
+   "tools": []
+  },
+  {
+   "id": "glm-5v",
+   "name": "GLM-5V",
+   "vendor": "智谱 AI",
+   "vendorCn": "智谱AI",
+   "country": "中国",
+   "grade": "A",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本",
+    "图像",
+    "视频"
+   ],
+   "thinking": false,
+   "cost": "中",
+   "scenes": [
+    "视频理解",
+    "图像",
+    "多模态"
+   ],
+   "strengths": [
+    "视频理解",
+    "中文多模态"
+   ],
+   "bestFor": "中文视频/图像理解",
+   "notes": "智谱视觉系列，视频理解突出",
+   "tools": []
+  },
+  {
+   "id": "minimax-m2",
+   "name": "MiniMax-M2",
+   "vendor": "MiniMax",
+   "vendorCn": "MiniMax",
+   "country": "中国",
+   "grade": "B",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本",
+    "音频"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "语音",
+    "对话",
+    "日常"
+   ],
+   "strengths": [
+    "语音能力强",
+    "性价比"
+   ],
+   "bestFor": "语音交互场景",
+   "notes": "语音能力是其特色",
+   "tools": []
+  },
+  {
+   "id": "yi-lightning",
+   "name": "Yi-Lightning",
+   "vendor": "零一万物",
+   "vendorCn": "零一万物",
+   "country": "中国",
+   "grade": "C",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "日常任务",
+    "中文",
+    "性价比"
+   ],
+   "strengths": [
+    "轻量",
+    "中文"
+   ],
+   "bestFor": "轻量中文任务",
+   "notes": "轻量级选择",
+   "tools": []
+  },
+  {
+   "id": "step-3",
+   "name": "Step-3",
+   "vendor": "阶跃星辰",
+   "vendorCn": "阶跃星辰",
+   "country": "中国",
+   "grade": "B",
+   "context": "128K",
+   "contextVal": 128,
+   "multimodal": [
+    "文本",
+    "图像"
+   ],
+   "thinking": false,
+   "cost": "低",
+   "scenes": [
+    "图像",
+    "中文",
+    "日常"
+   ],
+   "strengths": [
+    "图像生成",
+    "中文"
+   ],
+   "bestFor": "中文图像相关任务",
+   "notes": "图像能力是其特色",
+   "tools": []
+  }
+ ],
+ "tools": [
+  {
+   "id": "workbuddy",
+   "name": "WorkBuddy",
+   "vendor": "腾讯",
+   "type": "AI 办公工作台",
+   "platform": "Windows / macOS",
+   "desc": "腾讯出品的全场景 AI 办公工作台。一句话下达任务，自动拆解、规划、执行，交付完整成果（文档/表格/PPT/数据分析），打通腾讯文档、邮箱、会议、微信生态。",
+   "modelMode": "内置多模型 + 自定义模型接入（API Key 仅存本地）",
+   "modelSelect": "均衡 / 快速 / 极致 三档",
+   "builtinModels": [
+    "hy3",
+    "glm-5.2",
+    "glm-5.1",
+    "glm-5v-turbo",
+    "minimax-m3",
+    "minimax-m27",
+    "kimi-k3",
+    "kimi-k2.7-code",
+    "kimi-k2.6",
+    "deepseek-v4-flash",
+    "deepseek-v4-pro"
+   ],
+   "highlight": "选型建议：轻办公→Hy3(免费)；长文档→GLM-5.2；难任务→Kimi-K3；写代码→DeepSeek-V4-Flash；GLM-5.1/5V、MiniMax-M3、K2.7/K2.6 不建议主力",
+   "source": "workbuddy.cn 官方文档 + 实测评价（2026-08）"
+  },
+  {
+   "id": "qoder",
+   "name": "QoderWork",
+   "vendor": "Qoder",
+   "type": "桌面通用智能体助手",
+   "platform": "Windows / macOS",
+   "desc": "Qoder 智能体平台的办公产品线。将 Agent 能力从代码领域扩展到日常工作：文件整理、数据处理、文档生成、浏览器自动化、桌面控制、定时任务、IM 频道，本地运行安全可控。",
+   "modelMode": "Qoder 账号共享 Credits，内置多模型 + BYOK",
+   "modelSelect": "按模型计费（Credits）",
+   "builtinModels": [
+    "qwen-3.8-max",
+    "qwen-3.7-max",
+    "qwen-3.5"
+   ],
+   "highlight": "Qwen3.8-Max 全端首发（2.4T 参数）；共享 Qoder Credits 余额",
+   "source": "qoder.com / docs.qoder.com 官方（2026-08）"
+  },
+  {
+   "id": "trae",
+   "name": "TRAE (TraeWork)",
+   "vendor": "字节跳动",
+   "type": "AI 工作台 + AI IDE",
+   "platform": "网页 / 桌面 / 移动三端",
+   "desc": "字节出品。TraeWork 面向办公（Work/Code/Design 三模式），TraeCode 面向开发者 AI IDE（含 SOLO 自主编程 Agent）。支持云端智能体、自定义模型、MCP、Skills。",
+   "modelMode": "积分计费 + 自定义模型（BYOK）",
+   "modelSelect": "按模型消耗积分",
+   "builtinModels": [
+    "seed-2.1-turbo",
+    "seed-code",
+    "doubao-3"
+   ],
+   "highlight": "Seed 系列模型会员享 2.5 折；Work 模式面向非开发用户",
+   "source": "trae.cn / docs.trae.cn 官方（2026-08）"
+  },
+  {
+   "id": "cursor",
+   "name": "Cursor",
+   "vendor": "Anysphere",
+   "type": "AI 代码编辑器",
+   "platform": "Windows / macOS / Linux",
+   "desc": "最流行的 AI 原生代码编辑器之一。Agent 模式可自主规划、读取代码库、执行命令、多文件编辑。支持切换主流模型 + 自定义 API Key。",
+   "modelMode": "内置多模型 + BYOK",
+   "modelSelect": "手动选择/自动路由",
+   "builtinModels": [
+    "gpt-5.2",
+    "gpt-5.2-mini",
+    "claude-4.6",
+    "claude-4.5",
+    "claude-haiku-4.5",
+    "deepseek-v4",
+    "deepseek-v4-pro",
+    "glm-5.2",
+    "kimi-k3",
+    "gemini-3-pro"
+   ],
+   "highlight": "Agent 模式标杆；模型可自由切换与 BYOK",
+   "source": "cursor.com 公开信息（2026-08）"
+  },
+  {
+   "id": "claude-code",
+   "name": "Claude Code",
+   "vendor": "Anthropic",
+   "type": "终端 Agent 编程工具",
+   "platform": "Windows / macOS / Linux",
+   "desc": "Anthropic 官方终端 Agent。在终端内完成读代码、写文件、跑命令、提 PR 的完整闭环，Claude 系列模型原生优化。",
+   "modelMode": "内置 Claude 系列为主",
+   "modelSelect": "Claude 家族内切换",
+   "builtinModels": [
+    "claude-4.6",
+    "claude-4.5",
+    "claude-haiku-4.5"
+   ],
+   "highlight": "Agent 场景公认标杆；长上下文 + 稳定工具调用",
+   "source": "anthropic.com 公开信息（2026-08）"
+  },
+  {
+   "id": "gemini-cli",
+   "name": "Gemini CLI",
+   "vendor": "Google",
+   "type": "终端 Agent 编程工具",
+   "platform": "Windows / macOS / Linux",
+   "desc": "Google 官方终端 Agent，深度集成 Gemini 系列模型与 Google 搜索能力，适合长上下文 + 多模态任务。",
+   "modelMode": "内置 Gemini 系列",
+   "modelSelect": "Gemini 家族内切换",
+   "builtinModels": [
+    "gemini-3-pro",
+    "gemini-3-flash"
+   ],
+   "highlight": "1M 上下文 + 多模态 + 搜索增强",
+   "source": "google 公开信息（2026-08）"
+  },
+  {
+   "id": "codex",
+   "name": "OpenAI Codex",
+   "vendor": "OpenAI",
+   "type": "云端 Agent 编程工具",
+   "platform": "Web / CLI",
+   "desc": "OpenAI 云端编程 Agent，与 GitHub 深度集成，可自主创建 PR、跑测试、修 bug。GPT-5 系列原生优化。",
+   "modelMode": "内置 GPT 系列",
+   "modelSelect": "GPT 家族内切换",
+   "builtinModels": [
+    "gpt-5.2",
+    "gpt-5.2-mini"
+   ],
+   "highlight": "GitHub 深度集成；云端沙箱自动运行代码",
+   "source": "openai.com 公开信息（2026-08）"
+  },
+  {
+   "id": "copilot",
+   "name": "GitHub Copilot",
+   "vendor": "GitHub / OpenAI",
+   "type": "AI 编程助手",
+   "platform": "IDE 插件 / 网页",
+   "desc": "最早普及的 AI 编程助手，从代码补全演进为 Agent 模式（Copilot Workspace）。GPT 系列主力，支持多模型。",
+   "modelMode": "内置 GPT 系列为主",
+   "modelSelect": "GPT 家族内切换",
+   "builtinModels": [
+    "gpt-5.2",
+    "gpt-5.2-mini",
+    "gpt-4.5"
+   ],
+   "highlight": "编辑器内无缝体验；补全延迟低",
+   "source": "github.com 公开信息（2026-08）"
+  },
+  {
+   "id": "windsurf",
+   "name": "Windsurf",
+   "vendor": "Codeium",
+   "type": "AI 代码编辑器",
+   "platform": "Windows / macOS / Linux",
+   "desc": "Cascade Agent 驱动的 AI 编辑器，深度上下文感知，擅长跨文件理解和连续编辑任务。",
+   "modelMode": "内置多模型 + BYOK",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "claude-4.6",
+    "claude-4.5",
+    "gpt-5.2"
+   ],
+   "highlight": "Cascade 深度上下文；跨文件连续编辑",
+   "source": "windsurf.com 公开信息（2026-08）"
+  }
+ ]
+}</script>
+<script>
+'use strict';
+/* ===== 数据加载 ===== */
+const DATA = JSON.parse(document.getElementById('app-data').textContent);
+const MODELS = DATA.models;
+const TOOLS = DATA.tools;
+const META = DATA.meta;
+const toolById = {}; TOOLS.forEach(t => toolById[t.id] = t);
+const toolBadgeClass = {
+  'workbuddy':'wb','qoder':'qd','trae':'tr','cursor':'cs','claude-code':'cc',
+  'gemini-cli':'gc','codex':'cx','copilot':'cp','windsurf':'ws'
+};
+
+/* ===== 状态 ===== */
+const state = {
+  view: 'models',
+  q: '', grade: '', vendor: '', mm: '', sort: 'grade',
+  modalId: null
+};
+
+/* ===== 工具函数 ===== */
+function esc(s){return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function gradeColor(g){return META.gradeDef[g] ? META.gradeDef[g].color : '#64748b';}
+function fmtCtx(v){return v >= 1000 ? (v/1000).toFixed(v%1000===0?0:1)+'M' : v+'K';}
+
+function mmIcon(m){
+  let h = '';
+  if(m.includes('文本')) h += '<i>文本</i>';
+  if(m.includes('图像')) h += '<i class="img">🖼️ 图像</i>';
+  if(m.includes('音频')) h += '<i class="aud">🎵 音频</i>';
+  if(m.includes('视频')) h += '<i class="vid">🎬 视频</i>';
+  return h || '<i>—</i>';
+}
+function costClass(c){return c==='低'?'low':(c==='中'?'mid':'high');}
+
+function toolBadges(model){
+  const ids = model.tools || [];
+  if(!ids.length) return '<span class="cost" style="color:#5b6478">未内置</span>';
+  return ids.map(id => {
+    const t = toolById[id]; if(!t) return '';
+    const cls = toolBadgeClass[id] || 'other';
+    return `<span class="tool-badge ${cls}" title="${esc(t.name)} · ${esc(t.type)}">${esc(t.name)}</span>`;
+  }).join('');
+}
+
+/* ===== 过滤 ===== */
+function filteredModels(){
+  let list = MODELS.slice();
+  if(state.grade) list = list.filter(m => m.grade === state.grade);
+  if(state.vendor) list = list.filter(m => m.vendor === state.vendor);
+  if(state.mm){
+    if(state.mm === '多模态') list = list.filter(m => m.multimodal.length > 1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频'));
+    else if(state.mm === '思考模式') list = list.filter(m => m.thinking);
+    else if(state.mm === '1M上下文') list = list.filter(m => m.contextVal >= 1000);
+  }
+  if(state.q){
+    const q = state.q.toLowerCase();
+    list = list.filter(m => {
+      const hay = [m.name, m.vendor, m.vendorCn, m.bestFor, m.strengths.join(' '), m.scenes.join(' '), m.notes, fmtCtx(m.contextVal), m.context].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  if(state.sort === 'context') list.sort((a,b) => b.contextVal - a.contextVal);
+  else if(state.sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'zh'));
+  else list.sort((a,b) => (META.gradeScore[b.grade]||0) - (META.gradeScore[a.grade]||0));
+  return list;
+}
+
+/* ===== 表格渲染 ===== */
+function renderModels(){
+  const list = filteredModels();
+  const wrap = document.getElementById('main');
+  if(!list.length){
+    wrap.innerHTML = '<div class="empty"><b>没有匹配的模型</b>试试放宽筛选条件或清空搜索</div>';
+    return;
+  }
+  const rows = list.map(m => `
+    <tr onclick="openModal('${m.id}')">
+      <td><span class="m-name"><span class="grade" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></span><div class="m-vendor">${esc(m.vendorCn || m.vendor)}</div></td>
+      <td class="ctx-cell"><div class="ctxbar"><div class="bar"><div class="fill" style="width:${Math.min(100, m.contextVal/10)}%"></div></div><span class="txt">${fmtCtx(m.contextVal)}</span></div></td>
+      <td><div class="mm">${mmIcon(m.multimodal)}</div></td>
+      <td>${m.thinking?'<span class="tag think">🧠 思考</span>':''}${(m.strengths||[]).slice(0,3).map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</td>
+      <td><span class="cost ${costClass(m.cost)}">${m.cost}</span></td>
+      <td><div class="toolcell">${toolBadges(m)}</div></td>
+    </tr>`).join('');
+  wrap.innerHTML = `
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>模型</th><th>上下文</th><th>多模态</th><th>擅长领域</th><th>费用</th><th>Agent 工具</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  // stagger 入场动画（Motion-Driven）
+  requestAnimationFrame(() => {
+    document.querySelectorAll('#main tbody tr').forEach((tr, i) => {
+      tr.style.opacity = '0';
+      tr.style.transform = 'translateY(6px)';
+      setTimeout(() => {
+        tr.style.transition = 'opacity .3s ease, transform .3s ease';
+        tr.style.opacity = '1';
+        tr.style.transform = 'translateY(0)';
+      }, Math.min(i * 18, 400));
+    });
+  });
+}
+
+/* ===== 工具视图渲染 ===== */
+function renderTools(){
+  const wrap = document.getElementById('main');
+  const cards = TOOLS.map(t => {
+    const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
+    return `
+    <div class="toolcard">
+      <h3>${esc(t.name)} <span class="grade" style="background:#3a4154;font-size:11px;width:auto;padding:0 8px">${esc(t.type)}</span></h3>
+      <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
+      <div class="t-desc">${esc(t.desc)}</div>
+      <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
+      <div class="t-mode">模型选择：<b>${esc(t.modelSelect)}</b></div>
+      <div class="t-models">${models.map(m => `<span class="tm" onclick="openModal('${m.id}')" title="点击查看模型详情">${esc(m.name)}</span>`).join('')}</div>
+      <div class="t-hl">⭐ ${esc(t.highlight)}</div>
+      <div class="t-src">来源：${esc(t.source)}</div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `<div class="toolgrid">${cards}</div>`;
+}
+
+/* ===== 视图切换 ===== */
+function showView(v){
+  state.view = v;
+  document.getElementById('tabModels').classList.toggle('on', v==='models');
+  document.getElementById('tabTools').classList.toggle('on', v==='tools');
+  if(v==='models') renderModels(); else renderTools();
+}
+
+/* ===== 详情弹窗 ===== */
+function openModal(id){
+  const m = MODELS.find(x => x.id === id); if(!m) return;
+  const tools = (m.tools||[]).map(tid => toolById[tid]).filter(Boolean);
+  const toolStr = tools.length ? tools.map(t => `<span class="tool-badge ${toolBadgeClass[t.id]||'other'}" style="cursor:default">${esc(t.name)}</span>`).join('') : '<span style="color:#5b6478">未内置任何 Agent 工具</span>';
+  document.getElementById('modalBody').innerHTML = `
+    <button class="close" onclick="closeModal()">✕</button>
+    <h2><span class="grade" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}</h2>
+    <div class="m-sub">${esc(m.vendorCn||m.vendor)} · ${m.country} · ${fmtCtx(m.contextVal)} 上下文 · ${m.cost}费用${m.thinking?' · 🧠 思考模式':''}</div>
+    <div class="m-grid">
+      <div class="m-item"><div class="k">综合等级</div><div class="v" style="color:${gradeColor(m.grade)}">${m.grade} · ${META.gradeDef[m.grade].label}</div></div>
+      <div class="m-item"><div class="k">上下文窗口</div><div class="v">${fmtCtx(m.contextVal)}</div></div>
+      <div class="m-item"><div class="k">多模态输入</div><div class="v">${m.multimodal.join(' / ')}</div></div>
+      <div class="m-item"><div class="k">费用水平</div><div class="v">${m.cost}</div></div>
+    </div>
+    <div class="m-sec"><h4>💡 一句话选型</h4><p>${esc(m.bestFor)}</p></div>
+    <div class="m-sec"><h4>🎯 适用场景</h4><div class="m-row">${m.scenes.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div></div>
+    <div class="m-sec"><h4>🏆 擅长领域</h4><div class="m-row">${m.strengths.map(s=>`<span class="tag think">${esc(s)}</span>`).join('')}</div></div>
+    <div class="m-sec"><h4>🧩 内置此模型的 Agent 工具</h4><div class="m-row">${toolStr}</div></div>
+    <div class="m-sec"><h4>📝 备注</h4><p>${esc(m.notes)}</p></div>`;
+  document.getElementById('modalMask').classList.add('show');
+}
+function closeModal(){ document.getElementById('modalMask').classList.remove('show'); }
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+/* ===== 筛选器构建 ===== */
+function buildFilters(){
+  const grades = Object.keys(META.gradeDef);
+  document.getElementById('gradeFilter').innerHTML =
+    `<span style="opacity:.7">等级</span>` +
+    grades.map(g => `<button class="fbtn ${state.grade===g?'on':''}" data-k="grade" data-v="${g}">${g} ${META.gradeDef[g].label}</button>`).join('');
+  const vendors = [...new Set(MODELS.map(m => m.vendor))].sort();
+  document.getElementById('vendorFilter').innerHTML =
+    `<span style="opacity:.7">厂商</span>` +
+    vendors.map(v => `<button class="fbtn vendor-${v} ${state.vendor===v?'on':''}" data-k="vendor" data-v="${v}">${v}</button>`).join('');
+  const mms = ['多模态','思考模式','1M上下文'];
+  document.getElementById('mmFilter').innerHTML =
+    `<span style="opacity:.7">能力</span>` +
+    mms.map(m => `<button class="fbtn ${state.mm===m?'on':''}" data-k="mm" data-v="${m}">${m}</button>`).join('');
+  document.querySelectorAll('.fgroup button.fbtn').forEach(b => {
+    b.addEventListener('click', () => toggleFilter(b.dataset.k, b.dataset.v));
+  });
+}
+function toggleFilter(k, v){
+  state[k] = (state[k] === v) ? '' : v;
+  syncFilterUI(); renderModels();
+}
+function syncFilterUI(){
+  document.querySelectorAll('.fgroup button.fbtn').forEach(b => {
+    const k = b.dataset.k;
+    b.classList.toggle('on', b.dataset.v === state[k]);
+  });
+}
+
+/* ===== 统计 ===== */
+function renderStats(){
+  const gs = Object.keys(META.gradeDef);
+  document.getElementById('hdStats').innerHTML = `
+    <span class="stat"><b>${MODELS.length}</b>个模型</span>
+    <span class="stat"><b>${TOOLS.length}</b>款 Agent 工具</span>
+    ${gs.map(g => `<span class="stat"><span style="color:${META.gradeDef[g].color};font-weight:800">${g}</span> × ${MODELS.filter(m=>m.grade===g).length}</span>`).join('')}
+    <span class="stat"><b>${MODELS.filter(m=>m.contextVal>=1000).length}</b>款支持 1M 上下文</span>
+    <span class="stat"><b>${MODELS.filter(m=>m.multimodal.includes('图像')).length}</b>款支持图像输入</span>`;
+}
+
+/* ===== 初始化 ===== */
+document.getElementById('searchBox').addEventListener('input', e => { state.q = e.target.value.trim(); renderModels(); });
+document.getElementById('sortBox').addEventListener('change', e => { state.sort = e.target.value; renderModels(); });
+renderStats();
+buildFilters();
+renderModels();
+
+</script>
+</body>
+</html>

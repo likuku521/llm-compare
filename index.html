@@ -150,11 +150,11 @@ main{max-width:1280px;margin:18px auto 56px;padding:0 24px;min-height:40vh}
 .mcard .mc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
 .mcard .mc-tags .tag{font-size:11px;padding:3px 9px;border-radius:7px;background:rgba(255,255,255,.05);color:#A9B4CC;border:1px solid rgba(255,255,255,.09);white-space:nowrap}
 .mcard .mc-tags .tag.think{background:rgba(245,201,107,.11);color:var(--gold2);border-color:rgba(245,201,107,.32)}
-.mcard .mc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.08)}
-.mcard .mc-cost{font-size:12px;font-weight:700}
+.mcard .mc-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.08)}
+.mcard .mc-cost{font-size:12px;font-weight:700;flex-shrink:0}
 .mcard .mc-cost.low{color:var(--b)} .mc-cost.mid{color:var(--warn)} .mc-cost.high{color:var(--danger)}
-.mcard .mc-tools{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
-.tool-badge{font-size:10.5px;padding:2px 8px;border-radius:7px;white-space:nowrap;cursor:help;font-weight:600;border:1px solid}
+.mcard .mc-tools{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex:1;min-width:0;overflow:visible}
+.tool-badge{font-size:10.5px;padding:2px 8px;border-radius:7px;white-space:nowrap;cursor:help;font-weight:600;border:1px solid;flex-shrink:0}
 .tool-badge.wb{background:rgba(52,229,160,.1);color:#6FE8B8;border-color:rgba(52,229,160,.35)}
 .tool-badge.qd{background:rgba(255,139,160,.1);color:#FFA3B5;border-color:rgba(255,139,160,.35)}
 .tool-badge.tr{background:rgba(79,216,255,.1);color:#8FE3FF;border-color:rgba(79,216,255,.35)}

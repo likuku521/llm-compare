@@ -42,6 +42,64 @@ function toolBadges(model){
   }).join('');
 }
 
+/* ===== 任务推荐词典（搜索框智能推荐）===== */
+const TASKS = [
+  { kw:["做ppt","做ppt","ppt","演示","汇报","课件","幻灯片","路演"], label:"做PPT/演示汇报",
+    scenes:["办公"], strengths:["办公"], top:["glm-5.2","qwen-3.8-max","hy3","kimi-k3","gpt-5.2"],
+    reason:"需要内容组织+结构生成能力，办公类模型最擅长，GLM-5.2 长上下文适合多页内容" },
+  { kw:["写代码","编程","开发","程序","脚本","写程序","修bug","调试","代码"], label:"写代码/开发",
+    scenes:["代码"], strengths:["代码","编程","纯文本编程强"], top:["deepseek-v4-flash","claude-4.6","kimi-k3","deepseek-v4","gpt-5.2"],
+    reason:"代码任务看重生成质量+速度，DeepSeek 系列性价比最高，Claude 4.6 综合最强" },
+  { kw:["写文章","写作","文案","报告","周报","总结","公文","论文"], label:"写作/文案",
+    scenes:["写作","办公"], strengths:["写作","写作质量"], top:["claude-4.6","qwen-3.8-max","gpt-5.2","glm-5.2"],
+    reason:"写作需要语言组织能力，Claude 写作质量公认最好，中文场景 Qwen/GLM 更贴" },
+  { kw:["分析数据","数据分析","报表","表格","excel","财务","统计","图表"], label:"数据分析",
+    scenes:["数据分析","办公"], strengths:["数据处理","分析"], top:["glm-5.2","deepseek-v4","kimi-k3","qwen-3.8-max"],
+    reason:"数据分析要能吃长表格+多步推理，1M 上下文的 GLM-5.2/DeepSeek 最合适" },
+  { kw:["翻译","英文翻译","中译英","英译中"], label:"翻译",
+    scenes:["中文","通用对话"], strengths:["中文"], top:["gpt-5.2","qwen-3.8-max","deepseek-v4","claude-4.6"],
+    reason:"翻译要求双语能力，GPT/Qwen 中英互译综合最稳" },
+  { kw:["长文档","合同","报告书","调研","研究","文献","文档总结","万字"], label:"长文档/研究",
+    scenes:["长文档","长程任务"], strengths:["长上下文","长程任务"], top:["glm-5.2","claude-4.6","claude-4.5","deepseek-v4","kimi-k3"],
+    reason:"长文档需要大上下文窗口，1M 上下文的模型才能完整吃进全文" },
+  { kw:["图片","看图","识别图片","海报","图像"], label:"图片理解/生成",
+    scenes:["多模态理解","图像"], strengths:["图像"], top:["gemini-3-pro","qwen-3.8-max","gemini-3-flash","glm-5v"],
+    reason:"图片任务需要多模态能力，Gemini 系列多模态最全，Qwen 中文图像理解强" },
+  { kw:["视频","剪辑","音视频","视频理解"], label:"视频理解",
+    scenes:["视频"], strengths:["视频理解"], top:["gemini-3-pro","gemini-3-flash"],
+    reason:"视频理解是稀缺能力，目前只有 Gemini 系列支持视频输入" },
+  { kw:["语音","音频","会议记录","转写"], label:"语音/音频",
+    scenes:["音频"], strengths:["语音"], top:["gemini-3-pro","minimax-m2","gemini-3-flash"],
+    reason:"音频输入需要原生多模态，Gemini 全模态支持，MiniMax 语音特色" },
+  { kw:["数学","推理","逻辑","难题","奥数"], label:"数学/推理",
+    scenes:["深度推理","推理"], strengths:["数学推理","深度推理"], top:["deepseek-v4","kimi-k3","gpt-5.2","deepseek-v4-pro"],
+    reason:"数学推理看重思考模式，DeepSeek/Kimi 的推理链路业界领先" },
+  { kw:["自动化","agent","智能体","批量","定时","多步骤","任务流"], label:"Agent/自动化",
+    scenes:["Agent","长程任务"], strengths:["Agent","长程自主"], top:["kimi-k3","claude-4.6","glm-5.2","gpt-5.2"],
+    reason:"Agent 任务要稳定工具调用+长程自主，Kimi-K3/Claude 4.6 是 Agent 场景标杆" },
+  { kw:["中文","公文","国企","政务","合同审核"], label:"中文/政务",
+    scenes:["中文","办公"], strengths:["中文","中文办公"], top:["qwen-3.8-max","glm-5.2","hy3","deepseek-v4"],
+    reason:"中文场景国产模型更懂语境，Qwen 2.4T 参数中文能力最强" }
+];
+
+function matchTask(q){
+  const lower = q.toLowerCase();
+  for(const t of TASKS){
+    if(t.kw.some(k => lower.includes(k))) return t;
+  }
+  return null;
+}
+
+function scoreModel(m, task){
+  let s = 0;
+  (task.scenes||[]).forEach(sc => { if((m.scenes||[]).includes(sc)) s += 3; });
+  (task.strengths||[]).forEach(st => { if((m.strengths||[]).includes(st)) s += 2; });
+  if(task.top && task.top.includes(m.id)) s += 6;
+  s += (META.gradeScore[m.grade]||0);
+  if(m.cost === '低') s += 1;
+  return s;
+}
+
 /* ===== 过滤 ===== */
 function filteredModels(){
   let list = MODELS.slice();
@@ -53,16 +111,47 @@ function filteredModels(){
     else if(state.mm === '1M上下文') list = list.filter(m => m.contextVal >= 1000);
   }
   if(state.q){
-    const q = state.q.toLowerCase();
-    list = list.filter(m => {
-      const hay = [m.name, m.vendor, m.vendorCn, m.bestFor, m.strengths.join(' '), m.scenes.join(' '), m.notes, fmtCtx(m.contextVal), m.context].join(' ').toLowerCase();
-      return hay.includes(q);
-    });
-  }
-  if(state.sort === 'context') list.sort((a,b) => b.contextVal - a.contextVal);
+    const task = matchTask(state.q);
+    if(task){
+      // 推荐模式：按任务评分排序，保留 Top8
+      list = list.map(m => ({m, s: scoreModel(m, task)}))
+        .sort((a,b) => b.s - a.s)
+        .slice(0, 8)
+        .map(x => x.m);
+    } else {
+      const q = state.q.toLowerCase();
+      list = list.filter(m => {
+        const hay = [m.name, m.vendor, m.vendorCn, m.bestFor, m.strengths.join(' '), m.scenes.join(' '), m.notes, fmtCtx(m.contextVal), m.context].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+  } else if(state.sort === 'context') list.sort((a,b) => b.contextVal - a.contextVal);
   else if(state.sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'zh'));
   else list.sort((a,b) => (META.gradeScore[b.grade]||0) - (META.gradeScore[a.grade]||0));
   return list;
+}
+
+/* ===== 推荐横幅 ===== */
+function recoBanner(){
+  if(!state.q) return '';
+  const task = matchTask(state.q);
+  if(!task) return '';
+  const scored = MODELS.map(m => ({m, s: scoreModel(m, task)}))
+    .sort((a,b) => b.s - a.s)
+    .slice(0, 3);
+  const chips = scored.map(x => {
+    const m = x.m;
+    return `<span class="reco-chip" onclick="openModal('${m.id}')">
+      <span class="grade" style="background:${gradeColor(m.grade)};width:22px;height:22px;font-size:11px;border-radius:6px">${m.grade}</span>
+      <b>${esc(m.name)}</b>
+      <i>${esc(m.bestFor.split('——')[0])}</i>
+    </span>`;
+  }).join('');
+  return `<div class="reco">
+    <div class="reco-head">🎯 智能推荐：<b>${esc(task.label)}</b> <span class="reco-reason">${esc(task.reason)}</span></div>
+    <div class="reco-chips">${chips}</div>
+    <div class="reco-tip">↓ 以下为按任务匹配度排序的前 8 个模型，点击查看详情</div>
+  </div>`;
 }
 
 /* ===== 表格渲染 ===== */
@@ -82,7 +171,7 @@ function renderModels(){
       <td><span class="cost ${costClass(m.cost)}">${m.cost}</span></td>
       <td><div class="toolcell">${toolBadges(m)}</div></td>
     </tr>`).join('');
-  wrap.innerHTML = `
+  wrap.innerHTML = recoBanner() + `
     <div class="tbl-wrap"><table>
       <thead><tr>
         <th>模型</th><th>上下文</th><th>多模态</th><th>擅长领域</th><th>费用</th><th>Agent 工具</th>

@@ -122,6 +122,18 @@ tbody tr:last-child td{border-bottom:none}
 .empty{text-align:center;padding:70px 20px;color:var(--muted)}
 .empty b{display:block;font-size:17px;color:var(--ink);margin-bottom:6px}
 
+/* ===== 推荐横幅 ===== */
+.reco{margin-bottom:16px;background:linear-gradient(135deg,rgba(240,199,94,.08),rgba(83,216,255,.05));border:1px solid rgba(240,199,94,.28);border-radius:var(--radius-lg);padding:16px 18px;backdrop-filter:blur(12px)}
+.reco-head{font-size:14px;font-weight:700;color:var(--gold2);margin-bottom:10px}
+.reco-head b{font-size:15px}
+.reco-reason{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:3px;line-height:1.6}
+.reco-chips{display:flex;gap:10px;flex-wrap:wrap}
+.reco-chip{display:flex;align-items:center;gap:8px;background:rgba(10,14,26,.55);border:1px solid var(--glass-border);border-radius:12px;padding:9px 13px;cursor:pointer;transition:all .2s;max-width:100%}
+.reco-chip:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 20px rgba(240,199,94,.15)}
+.reco-chip b{font-size:13px;white-space:nowrap}
+.reco-chip i{font-style:normal;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.reco-tip{margin-top:10px;font-size:11.5px;color:var(--dim)}
+
 /* ===== Tool view ===== */
 .toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:16px}
 .toolcard{background:var(--card);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:20px;transition:all .25s;backdrop-filter:blur(14px);position:relative;overflow:hidden}
@@ -198,7 +210,7 @@ footer .src p{margin:2px 0}
 
 <div class="filters">
   <div class="searchbox-wrap" style="flex:1;min-width:220px">
-    <input class="searchbox" id="searchBox" placeholder="🔍 搜索模型名 / 厂商 / 擅长领域，如 Kimi、1M、前端、办公…">
+    <input class="searchbox" id="searchBox" placeholder="🔍 试试：做PPT / 写代码 / 分析数据 / 翻译 / 长文档 / 图片…（智能推荐匹配模型）">
   </div>
   <div class="fgroup" id="gradeFilter"></div>
   <div class="fgroup" id="vendorFilter"></div>

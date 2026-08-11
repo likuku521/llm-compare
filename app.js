@@ -212,12 +212,146 @@ function renderTools(){
   wrap.innerHTML = `<div class="toolgrid">${cards}</div>`;
 }
 
+/* ===== 实时动态（OpenRouter API）===== */
+let LIVE = [];          // 清洗后的实时模型
+let LIVE_LOADED = false;
+const OR_API = 'https://openrouter.ai/api/v1/models';
+
+function isLocalModel(orId){
+  // 本地已收录匹配：用 slug 主体与本地 id 精确匹配
+  const slug = (orId.split('/').pop() || '').toLowerCase();
+  return MODELS.some(m => {
+    const mid = m.id.toLowerCase();
+    return slug === mid || slug.startsWith(mid) || slug.includes(mid);
+  });
+}
+function fmtPricePerM(p){
+  const n = parseFloat(p);
+  if(isNaN(n) || n < 0) return '—';
+  const perM = n * 1e6;
+  if(perM === 0) return '$0';
+  if(perM < 0.01) return '$'+perM.toFixed(3);
+  if(perM < 1) return '$'+perM.toFixed(2);
+  return '$'+perM.toFixed(0);
+}
+function liveModality(mods){
+  const m = mods || [];
+  if(!m.length) return '';
+  const icons = m.map(x => x==='text'?'文本':(x==='image'?'🖼️':(x==='audio'?'🎵':(x==='video'?'🎬':x))));
+  return icons.slice(0,4).join(' ');
+}
+function liveVendor(id){
+  return id.split('/')[0] || '?';
+}
+
+async function fetchLive(){
+  try{
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(OR_API, {signal: ctrl.signal});
+    clearTimeout(timer);
+    const d = await res.json();
+    const raw = d.data || [];
+    // 清洗：去掉变体、无效项、OpenRouter 特殊路由模型
+    const SKIP_ID = /router|fusion|body builder|:batch|:extended|:nightly|:free/i;
+    LIVE = raw.filter(m =>
+      m.id && !SKIP_ID.test(m.id) && !m.id.startsWith('~') &&
+      (m.context_length || 0) > 0 &&
+      parseFloat(m.pricing?.prompt ?? '') >= 0
+    );
+    LIVE_LOADED = true;
+  }catch(e){
+    LIVE_LOADED = false;
+    LIVE = [];
+  }
+  renderLive();
+}
+
+function renderLive(){
+  const tab = document.getElementById('tabLive');
+  if(!tab) return;
+  if(!LIVE_LOADED){
+    tab.style.display = 'none';
+    if(state.view === 'live'){ showView('models'); }
+    return;
+  }
+  tab.style.display = '';
+  if(state.view !== 'live') return;
+
+  // 三块数据
+  const newest = [...LIVE].filter(m => m.created > 0).sort((a,b) => b.created - a.created).slice(0, 10);
+  const bigCtx = [...LIVE].sort((a,b) => (b.context_length||0) - (a.context_length||0)).slice(0, 10);
+  const cheap = [...LIVE].filter(m => (parseFloat(m.pricing?.prompt)||1) <= 0.0000012 && (m.context_length||0) >= 128000)
+    .sort((a,b) => parseFloat(a.pricing?.prompt) - parseFloat(b.pricing?.prompt)).slice(0, 10);
+
+  const wrap = document.getElementById('main');
+  wrap.innerHTML = `
+    <div class="live-head">
+      <span class="live-dot"></span>
+      <b>实时模型动态</b>
+      <span class="live-src">OpenRouter API 实时拉取 · ${LIVE.length} 个模型 · ${new Date().toLocaleString('zh-CN',{hour12:false})}</span>
+    </div>
+    ${liveSection('🆕 最新上线', newest, 'created')}
+    ${liveSection('🚀 超长上下文 (1M+)', bigCtx, 'ctx')}
+    ${liveSection('💰 低价精选 (≥128K 上下文)', cheap, 'price')}
+    <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 $/1M tokens。</div>
+  `;
+}
+
+function liveSection(title, list, kind){
+  const cards = list.map(m => {
+    const local = isLocalModel(m.id);
+    const created = m.created ? new Date(m.created*1000).toLocaleDateString('zh-CN') : '?';
+    const cutoff = m.knowledge_cutoff || '—';
+    const tag = local ? '<span class="have-tag">✓ 已收录</span>' : '<span class="new-tag">NEW</span>';
+    const sub = kind==='created' ? `上线 ${created}` : (kind==='ctx' ? `${Math.round((m.context_length||0)/1000)}K` : fmtPricePerM(m.pricing?.prompt));
+    return `<div class="live-card" onclick="openLive('${esc(m.id)}')">
+      <div class="live-top"><span class="live-name">${esc(m.name || m.id)}</span>${tag}</div>
+      <div class="live-id">${esc(m.id)}</div>
+      <div class="live-meta">
+        <span>上下文 <b>${Math.round((m.context_length||0)/1000)}K</b></span>
+        <span>输入 <b>${fmtPricePerM(m.pricing?.prompt)}</b></span>
+        <span>知识截止 <b>${cutoff}</b></span>
+      </div>
+      <div class="live-mm">${liveModality(m.architecture?.input_modalities)}${m.reasoning?.supported_efforts ? ' 🧠推理' : ''}</div>
+      <div class="live-sub">${sub} · ${esc(liveVendor(m.id))}</div>
+    </div>`;
+  }).join('');
+  return `<div class="live-sec"><h3>${title} <span class="live-count">${list.length}</span></h3><div class="live-grid">${cards}</div></div>`;
+}
+
+function openLive(id){
+  const m = LIVE.find(x => x.id === id); if(!m) return;
+  const local = MODELS.find(x => id.toLowerCase().includes(x.id.toLowerCase()));
+  const mods = m.architecture?.input_modalities || [];
+  document.getElementById('modalBody').innerHTML = `
+    <button class="close" onclick="closeModal()">✕</button>
+    <h2>${esc(m.name || m.id)} ${local?'<span class="tag think">✓ 本地已收录</span>':'<span class="tag" style="background:rgba(240,199,94,.15);color:var(--gold2);border-color:rgba(240,199,94,.4)">🆕 新模型</span>'}</h2>
+    <div class="m-sub">${esc(m.id)} · OpenRouter 实时数据</div>
+    <div class="m-grid">
+      <div class="m-item"><div class="k">上下文窗口</div><div class="v">${Math.round((m.context_length||0)/1000)}K</div></div>
+      <div class="m-item"><div class="k">输入价格</div><div class="v">${fmtPricePerM(m.pricing?.prompt)}/1M</div></div>
+      <div class="m-item"><div class="k">输出价格</div><div class="v">${fmtPricePerM(m.pricing?.completion)}/1M</div></div>
+      <div class="m-item"><div class="k">知识截止</div><div class="v">${m.knowledge_cutoff || '—'}</div></div>
+    </div>
+    <div class="m-sec"><h4>🔧 输入模态</h4><div class="m-row"><span class="tag">${liveModality(mods) || '文本'}</span>${m.reasoning?.supported_efforts ? '<span class="tag think">🧠 支持推理模式</span>' : ''}</div></div>
+    <div class="m-sec"><h4>📅 上线时间</h4><p>${m.created ? new Date(m.created*1000).toLocaleString('zh-CN') : '未知'}</p></div>
+    ${m.description ? `<div class="m-sec"><h4>📝 官方描述</h4><p>${esc(m.description.slice(0,300))}</p></div>` : ''}
+    ${local ? `<div class="m-sec"><h4>🔗 本站档案</h4><p>此模型已有本地实测档案，<a href="#" onclick="closeModal();openModal('${local.id}');return false;">点击查看</a>（等级/场景/Agent工具）</p></div>` : ''}
+    <div class="m-sec"><h4>🔗 来源</h4><p>OpenRouter API：<a href="https://openrouter.ai/${esc(m.id)}" target="_blank">https://openrouter.ai/${esc(m.id)}</a></p></div>`;
+  document.getElementById('modalMask').classList.add('show');
+}
+
 /* ===== 视图切换 ===== */
 function showView(v){
   state.view = v;
   document.getElementById('tabModels').classList.toggle('on', v==='models');
   document.getElementById('tabTools').classList.toggle('on', v==='tools');
-  if(v==='models') renderModels(); else renderTools();
+  const tl = document.getElementById('tabLive');
+  if(tl) tl.classList.toggle('on', v==='live');
+  if(v==='models') renderModels();
+  else if(v==='tools') renderTools();
+  else renderLive();
 }
 
 /* ===== 详情弹窗 ===== */
@@ -291,3 +425,4 @@ document.getElementById('sortBox').addEventListener('change', e => { state.sort 
 renderStats();
 buildFilters();
 renderModels();
+fetchLive();  // 异步拉取实时模型，失败自动隐藏 tab

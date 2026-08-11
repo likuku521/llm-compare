@@ -77,6 +77,8 @@ h1{font-size:23px;font-weight:800;letter-spacing:.3px;
 .viewtab{padding:9px 22px;border-radius:11px;border:1px solid var(--glass-border);background:var(--card);color:var(--muted);cursor:pointer;font-size:13.5px;font-weight:600;transition:all .2s;backdrop-filter:blur(10px)}
 .viewtab:hover{color:var(--ink);border-color:rgba(255,255,255,.2)}
 .viewtab.on{background:linear-gradient(135deg,rgba(240,199,94,.92),rgba(232,155,60,.92));color:#0A0E1A;font-weight:800;border-color:transparent;box-shadow:0 4px 24px rgba(240,199,94,.3)}
+.viewtab .live-dot-inline{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(61,220,151,.5)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(61,220,151,0)}}
 
 /* ===== Table view ===== */
 main{max-width:1280px;margin:16px auto 48px;padding:0 6px}
@@ -133,6 +135,28 @@ tbody tr:last-child td{border-bottom:none}
 .reco-chip b{font-size:13px;white-space:nowrap}
 .reco-chip i{font-style:normal;font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
 .reco-tip{margin-top:10px;font-size:11.5px;color:var(--dim)}
+
+/* ===== 实时动态 ===== */
+.live-head{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:14px 18px;background:linear-gradient(135deg,rgba(61,220,151,.08),rgba(83,216,255,.06));border:1px solid rgba(61,220,151,.3);border-radius:var(--radius-lg);flex-wrap:wrap}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 12px rgba(61,220,151,.8);animation:pulse 1.6s infinite}
+.live-head b{font-size:16px}
+.live-src{font-size:12px;color:var(--muted);margin-left:auto}
+.live-sec{margin-bottom:26px}
+.live-sec h3{font-size:15px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.live-count{font-size:11px;background:var(--card2);border:1px solid var(--glass-border);border-radius:20px;padding:1px 9px;color:var(--muted);font-weight:600}
+.live-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.live-card{background:var(--card);border:1px solid var(--glass-border);border-radius:13px;padding:13px 15px;cursor:pointer;transition:all .2s;backdrop-filter:blur(10px)}
+.live-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:0 8px 28px rgba(83,216,255,.1)}
+.live-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.live-name{font-size:13.5px;font-weight:700}
+.new-tag{font-size:10px;font-weight:800;background:rgba(240,199,94,.18);color:var(--gold2);border:1px solid rgba(240,199,94,.45);border-radius:6px;padding:1px 6px;letter-spacing:.5px}
+.have-tag{font-size:10px;font-weight:800;background:rgba(61,220,151,.15);color:var(--ok);border:1px solid rgba(61,220,151,.4);border-radius:6px;padding:1px 6px}
+.live-id{font-size:11px;color:var(--dim);font-family:ui-monospace,Consolas,monospace;margin:3px 0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.live-meta{display:flex;gap:12px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.live-meta b{color:var(--ink);font-weight:700}
+.live-mm{font-size:11px;color:#9FB4D8;margin-top:6px;min-height:16px}
+.live-sub{font-size:11px;color:var(--dim);margin-top:5px}
+.live-note{margin-top:6px;font-size:12px;color:var(--muted);background:var(--card);border:1px dashed var(--glass-border);border-radius:12px;padding:11px 14px;line-height:1.8}
 
 /* ===== Tool view ===== */
 .toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:16px}
@@ -225,6 +249,7 @@ footer .src p{margin:2px 0}
 <div class="viewtabs">
   <div class="viewtab on" id="tabModels" onclick="showView('models')">📊 模型总览</div>
   <div class="viewtab" id="tabTools" onclick="showView('tools')">🛠️ Agent 工具内置模型</div>
+  <div class="viewtab" id="tabLive" onclick="showView('live')" style="display:none"><span class="live-dot-inline"></span>🛰️ 实时动态</div>
 </div>
 
 <main id="main"></main>

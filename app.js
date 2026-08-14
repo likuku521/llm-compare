@@ -429,32 +429,90 @@ function syncFilterUI(){
   });
 }
 
-/* ===== 统计（数字滚动）===== */
+/* ===== 统计图表（v3.1：环形图/堆叠条）===== */
 function renderStats(){
   const gs = Object.keys(META.gradeDef);
-  const items = [
-    {v: MODELS.length, lbl: '精选模型', cls:'gold'},
-    {v: TOOLS.length, lbl: 'Agent 工具', cls:'cyan'},
-    ...gs.map(g => ({v: MODELS.filter(m=>m.grade===g).length, lbl: `${g} 级`, cls: g==='S'?'gold':(g==='A'?'cyan':(g==='B'?'green':'gray'))})),
-    {v: MODELS.filter(m=>m.contextVal>=1000).length, lbl: '1M 上下文', cls:'violet'},
-    {v: MODELS.filter(m=>m.multimodal.includes('图像')).length, lbl: '图像输入', cls:'green'}
-  ];
-  document.getElementById('hdStats').innerHTML = items.map((it, i) =>
-    `<div class="stat rise" style="animation-delay:${i*70}ms"><div class="num ${it.cls}" data-count="${it.v}">0</div><div class="lbl">${it.lbl}</div></div>`
-  ).join('');
-  // count-up 动画
-  const nums = document.querySelectorAll('.stat .num[data-count]');
-  nums.forEach(n => {
-    const target = parseInt(n.dataset.count);
-    const dur = 1100, t0 = performance.now();
-    const step = now => {
-      const p = Math.min(1, (now - t0)/dur);
-      const ease = 1 - Math.pow(1-p, 3);
-      n.textContent = Math.round(target * ease);
-      if(p < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  });
+  const total = MODELS.length;
+  // 数据
+  const gradeCount = {};
+  gs.forEach(g => gradeCount[g] = MODELS.filter(m=>m.grade===g).length);
+  const thinkN = MODELS.filter(m=>m.thinking).length;
+  const mmN = MODELS.filter(m => m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频')).length;
+  const oneMN = MODELS.filter(m=>m.contextVal>=1000).length;
+  // 上下文分段
+  const ctx256 = MODELS.filter(m=>m.contextVal>=256 && m.contextVal<1000).length;
+  const ctx128 = MODELS.filter(m=>m.contextVal<256).length;
+  // 环形图 arc 生成（SVG stroke-dasharray 动画）
+  function donut(segs, centerNum, centerLbl){
+    const R = 42, C = 2*Math.PI*R;
+    let acc = 0;
+    const arcs = segs.map(s => {
+      const len = C * s.v / total;
+      const el = `<circle cx="50" cy="50" r="${R}" fill="none" stroke="${s.c}" stroke-width="13"
+        stroke-dasharray="0 500" style="--len:${len.toFixed(2)} 500" class="donut-arc"
+        transform="rotate(${acc.toFixed(1)} 50 50)"/>`;
+      acc += len;
+      return el;
+    }).join('');
+    const legend = segs.map(s => `<div class="dl-row"><span class="dl-dot" style="background:${s.c}"></span>${s.l}<b>${s.v}</b><span class="dl-pct">${Math.round(s.v/total*100)}%</span></div>`).join('');
+    return `<div class="donut-wrap">
+      <div class="donut-box"><svg viewBox="0 0 100 100">${arcs}</svg>
+        <div class="donut-center"><span class="dc-num">${centerNum}</span><span class="dc-lbl">${centerLbl}</span></div>
+      </div>
+      <div class="donut-legend">${legend}</div>
+    </div>`;
+  }
+  const gradeSegs = gs.map(g => ({v: gradeCount[g], c: META.gradeDef[g].color, l: g+'级'}));
+  const capSegs = [
+    {v: thinkN, c: 'var(--gold)', l: '思考模式'},
+    {v: mmN - thinkN > 0 ? mmN - thinkN : 0, c: 'var(--violet)', l: '多模态'},
+    {v: total - thinkN - (mmN - thinkN > 0 ? mmN - thinkN : 0), c: 'rgba(255,255,255,.14)', l: '纯文本'}
+  ].filter(s => s.v > 0);
+  const ctxSegs = [
+    {v: oneMN, c: 'var(--gold)', l: '1M+'},
+    {v: ctx256, c: 'var(--cyan)', l: '256K~999K'},
+    {v: ctx128, c: 'rgba(255,255,255,.22)', l: '<256K'}
+  ].filter(s => s.v > 0);
+  const ctxBars = ctxSegs.map(s => `<div class="bs-seg" style="background:${s.c};flex-basis:${s.v/total*100}%"></div>`).join('');
+  const ctxRows = ctxSegs.map(s => `<div class="bs-row"><span class="bs-dot" style="background:${s.c}"></span>${s.l}<b>${s.v}</b><span class="bs-pct">${Math.round(s.v/total*100)}%</span></div>`).join('');
+
+  document.getElementById('hdStats').innerHTML = `
+    <div class="stat rise">
+      <div class="stat-title">📦 模型库总览</div>
+      <div class="stat-hero">
+        <div class="hero-num" data-count="${total}">0</div>
+        <div class="hero-sub">
+          <div class="sub-item">Agent 工具 <b data-count2="${TOOLS.length}">0</b></div>
+          <div class="sub-item">1M 上下文 <b style="color:var(--gold)">${oneMN}</b> 款</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat rise" style="animation-delay:80ms">
+      <div class="stat-title">🏅 等级分布</div>
+      ${donut(gradeSegs, total, '模型')}
+    </div>
+    <div class="stat rise" style="animation-delay:160ms">
+      <div class="stat-title">🧠 能力分布</div>
+      ${donut(capSegs, thinkN, '思考模式')}
+    </div>
+    <div class="stat rise" style="animation-delay:240ms">
+      <div class="stat-title">📏 上下文规模</div>
+      <div class="barstack">
+        <div class="bs-track">${ctxBars}</div>
+        ${ctxRows}
+      </div>
+    </div>`;
+  // count-up 动画（hero 数字 + 工具数）
+  const t0 = performance.now(), dur = 1100;
+  const step = now => {
+    const p = Math.min(1, (now - t0)/dur), ease = 1 - Math.pow(1-p, 3);
+    const n1 = document.querySelector('.hero-num[data-count]');
+    const n2 = document.querySelector('[data-count2]');
+    if(n1) n1.textContent = Math.round(total * ease);
+    if(n2) n2.textContent = Math.round(TOOLS.length * ease);
+    if(p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 
 /* ===== 动效系统（ui-motion 方法论）===== */

@@ -116,6 +116,7 @@ a{color:var(--cyan);text-decoration:none}
 .chart-tip .tip-models{font-size:11.5px;color:#C3CCE0;line-height:1.75}
 .chart-tip .tip-models .tm{display:inline-block;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:6px;padding:1px 7px;margin:1px 3px 1px 0}
 .chart-tip .tip-more{font-size:10.5px;color:var(--dim);margin-top:4px}
+.chart-tip .tip-notes{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.65;border-top:1px dashed rgba(255,255,255,.09);padding-top:6px;max-height:64px;overflow:hidden}
 /* 环形图弧线 hover 命中 */
 .donut-arc{cursor:pointer}
 .donut-arc:hover{filter:brightness(1.2) drop-shadow(0 0 6px rgba(245,201,107,.35))}
@@ -1788,7 +1789,7 @@ function recoBanner(){
 function renderCards(list){
   const cards = list.map((m, i) => {
     const ctxPct = Math.min(100, m.contextVal/10);
-    return `<div class="mcard rise" style="animation-delay:${Math.min(i*40,500)}ms" data-mid="${m.id}"
+    return `<div class="mcard rise" style="animation-delay:${Math.min(i*40,500)}ms" data-mid="${m.id}" data-tip-key="model:${m.id}"
       onclick="openModal('${m.id}')">
       <div class="mc-top">
         <div class="mc-grade" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
@@ -1856,7 +1857,7 @@ function renderTools(){
   const wrap = document.getElementById('main');
   const cards = TOOLS.map((t, i) => {
     const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
-    return `<div class="toolcard rise" style="animation-delay:${Math.min(i*60,400)}ms" data-mid="tool-${t.id}">
+    return `<div class="toolcard rise" style="animation-delay:${Math.min(i*60,400)}ms" data-mid="tool-${t.id}" data-tip-key="tool:${t.id}">
       <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
       <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
       <div class="t-desc">${esc(t.desc)}</div>
@@ -2217,31 +2218,38 @@ function initCardFX(){
   });
 }
 
-/* ===== 图表悬浮提示（事件委托 + 生命周期）===== */
+/* ===== 图表/卡片悬浮提示（事件委托 + 生命周期）===== */
 (function(){
   const tip = document.createElement('div');
   tip.className = 'chart-tip';
   tip.id = 'chartTip';
   document.body.appendChild(tip);
   let hideTimer = null;
-  function showTip(title, models){
-    const chips = models.slice(0, 8).map(n => `<span class="tm">${esc(n)}</span>`).join('');
-    const more = models.length > 8 ? `<div class="tip-more">… 共 ${models.length} 个</div>` : '';
-    tip.innerHTML = `<div class="tip-title"><span class="tip-dot" style="background:var(--gold)"></span>${esc(title)}</div>
-      <div class="tip-models">${chips}${more}</div>`;
+  function showTip(html){
+    tip.innerHTML = html;
     tip.classList.add('show');
   }
   function hideTip(){ clearTimeout(hideTimer); tip.classList.remove('show'); }
-  document.addEventListener('mouseover', e => {
-    const el = e.target.closest('[data-tip]');
-    if(!el) { hideTip(); return; }
+  // 内容生成：data-tip（标题+芯片）或 data-tip-key（模型/工具索引）
+  function tipContent(el){
+    const key = el.dataset.tipKey;
+    if(key){ return TIP_DB[key] ? TIP_DB[key]() : null; }
     const models = (el.dataset.models || '').split(',').filter(Boolean);
-    showTip(el.dataset.tip || '模型', models);
+    const chips = models.slice(0, 8).map(n => `<span class="tm">${esc(n)}</span>`).join('');
+    const more = models.length > 8 ? `<div class="tip-more">… 共 ${models.length} 个</div>` : '';
+    return `<div class="tip-title"><span class="tip-dot" style="background:var(--gold)"></span>${esc(el.dataset.tip || '模型')}</div>
+      <div class="tip-models">${chips}${more}</div>`;
+  }
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('[data-tip], [data-tip-key]');
+    if(!el) { hideTip(); return; }
+    const html = tipContent(el);
+    if(html) showTip(html); else hideTip();
   });
   document.addEventListener('mousemove', e => {
     if(!tip.classList.contains('show')) return;
     const pad = 14;
-    const tw = 260, th = 120; // 预估尺寸用于边缘翻转
+    const tw = 280, th = 150; // 预估尺寸用于边缘翻转
     let x = e.clientX + pad, y = e.clientY + pad;
     if(x + tw > window.innerWidth) x = e.clientX - tw - pad;
     if(y + th > window.innerHeight) y = e.clientY - th - pad;
@@ -2249,11 +2257,27 @@ function initCardFX(){
     tip.style.top = y + 'px';
   });
   document.addEventListener('mouseout', e => {
-    if(e.target.closest && !e.target.closest('[data-tip]')) hideTip();
+    if(e.target.closest && !e.target.closest('[data-tip], [data-tip-key]')) hideTip();
   });
   window.addEventListener('scroll', hideTip, true);
   window.addEventListener('resize', hideTip);
 })();
+
+/* ===== 模型卡/工具卡悬浮内容库 ===== */
+const TIP_DB = {};
+MODELS.forEach(m => {
+  TIP_DB['model:' + m.id] = () => `
+    <div class="tip-title"><span class="tip-dot" style="background:${gradeColor(m.grade)}"></span>${esc(m.name)} · ${m.grade}级 · ${m.cost}费用</div>
+    <div class="tip-models">🎯 ${m.scenes.slice(0,4).map(s=>`<span class="tm">${esc(s)}</span>`).join('')}</div>
+    ${m.notes ? `<div class="tip-notes">${esc(m.notes)}</div>` : ''}`;
+});
+TOOLS.forEach(t => {
+  const cnt = (t.builtinModels||[]).length;
+  TIP_DB['tool:' + t.id] = () => `
+    <div class="tip-title"><span class="tip-dot" style="background:var(--cyan)"></span>${esc(t.name)} · ${cnt} 个内置模型</div>
+    <div class="tip-models">⚙️ ${esc(t.modelMode)}<br>🎚️ ${esc(t.modelSelect)}</div>
+    <div class="tip-notes">⭐ ${esc(t.highlight)}</div>`;
+});
 
 /* ===== 初始化 ===== */
 document.getElementById('searchBox').addEventListener('input', e => { state.q = e.target.value.trim(); renderModels(); });

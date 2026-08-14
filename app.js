@@ -442,7 +442,7 @@ function renderStats(){
   // 上下文分段
   const ctx256 = MODELS.filter(m=>m.contextVal>=256 && m.contextVal<1000).length;
   const ctx128 = MODELS.filter(m=>m.contextVal<256).length;
-  // 环形图 arc 生成（SVG stroke-dasharray 动画）
+  // 环形图 arc 生成（SVG stroke-dasharray 动画 + data-tip 悬浮）
   function donut(segs, centerNum, centerLbl){
     const R = 42, C = 2*Math.PI*R;
     let acc = 0;
@@ -450,6 +450,7 @@ function renderStats(){
       const len = C * s.v / total;
       const el = `<circle cx="50" cy="50" r="${R}" fill="none" stroke="${s.c}" stroke-width="13"
         stroke-dasharray="0 500" style="--len:${len.toFixed(2)} 500" class="donut-arc"
+        data-tip="${esc(s.tipTitle)}" data-models="${esc(s.tipModels.join(','))}"
         transform="rotate(${acc.toFixed(1)} 50 50)"/>`;
       acc += len;
       return el;
@@ -462,18 +463,25 @@ function renderStats(){
       <div class="donut-legend">${legend}</div>
     </div>`;
   }
-  const gradeSegs = gs.map(g => ({v: gradeCount[g], c: META.gradeDef[g].color, l: g+'级'}));
+  const gradeSegs = gs.map(g => ({
+    v: gradeCount[g], c: META.gradeDef[g].color, l: g+'级',
+    tipTitle: g+' 级模型', tipModels: MODELS.filter(m=>m.grade===g).map(m=>m.name)
+  }));
+  const thinkModels = MODELS.filter(m=>m.thinking).map(m=>m.name);
+  const mmModels = MODELS.filter(m => !m.thinking && (m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频'))).map(m=>m.name);
+  const textModels = MODELS.filter(m => !m.thinking && !(m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频'))).map(m=>m.name);
   const capSegs = [
-    {v: thinkN, c: 'var(--gold)', l: '思考模式'},
-    {v: mmN - thinkN > 0 ? mmN - thinkN : 0, c: 'var(--violet)', l: '多模态'},
-    {v: total - thinkN - (mmN - thinkN > 0 ? mmN - thinkN : 0), c: 'rgba(255,255,255,.14)', l: '纯文本'}
+    {v: thinkN, c: 'var(--gold)', l: '思考模式', tipTitle: '思考模式模型', tipModels: thinkModels},
+    {v: mmModels.length, c: 'var(--violet)', l: '多模态', tipTitle: '多模态模型（无思考）', tipModels: mmModels},
+    {v: textModels.length, c: 'rgba(255,255,255,.14)', l: '纯文本', tipTitle: '纯文本模型', tipModels: textModels}
   ].filter(s => s.v > 0);
   const ctxSegs = [
-    {v: oneMN, c: 'var(--gold)', l: '1M+'},
-    {v: ctx256, c: 'var(--cyan)', l: '256K~999K'},
-    {v: ctx128, c: 'rgba(255,255,255,.22)', l: '<256K'}
+    {v: oneMN, c: 'var(--gold)', l: '1M+', tipTitle: '1M+ 上下文模型', tipModels: MODELS.filter(m=>m.contextVal>=1000).map(m=>m.name)},
+    {v: ctx256, c: 'var(--cyan)', l: '256K~999K', tipTitle: '256K~999K 模型', tipModels: MODELS.filter(m=>m.contextVal>=256 && m.contextVal<1000).map(m=>m.name)},
+    {v: ctx128, c: 'rgba(255,255,255,.22)', l: '<256K', tipTitle: '<256K 上下文模型', tipModels: MODELS.filter(m=>m.contextVal<256).map(m=>m.name)}
   ].filter(s => s.v > 0);
-  const ctxBars = ctxSegs.map(s => `<div class="bs-seg" style="background:${s.c};flex-basis:${s.v/total*100}%"></div>`).join('');
+  const ctxBars = ctxSegs.map(s => `<div class="bs-seg" style="background:${s.c};flex-basis:${s.v/total*100}%"
+    data-tip="${esc(s.tipTitle)}" data-models="${esc(s.tipModels.join(','))}"></div>`).join('');
   const ctxRows = ctxSegs.map(s => `<div class="bs-row"><span class="bs-dot" style="background:${s.c}"></span>${s.l}<b>${s.v}</b><span class="bs-pct">${Math.round(s.v/total*100)}%</span></div>`).join('');
 
   document.getElementById('hdStats').innerHTML = `
@@ -575,6 +583,44 @@ function initCardFX(){
     });
   });
 }
+
+/* ===== 图表悬浮提示（事件委托 + 生命周期）===== */
+(function(){
+  const tip = document.createElement('div');
+  tip.className = 'chart-tip';
+  tip.id = 'chartTip';
+  document.body.appendChild(tip);
+  let hideTimer = null;
+  function showTip(title, models){
+    const chips = models.slice(0, 8).map(n => `<span class="tm">${esc(n)}</span>`).join('');
+    const more = models.length > 8 ? `<div class="tip-more">… 共 ${models.length} 个</div>` : '';
+    tip.innerHTML = `<div class="tip-title"><span class="tip-dot" style="background:var(--gold)"></span>${esc(title)}</div>
+      <div class="tip-models">${chips}${more}</div>`;
+    tip.classList.add('show');
+  }
+  function hideTip(){ clearTimeout(hideTimer); tip.classList.remove('show'); }
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('[data-tip]');
+    if(!el) { hideTip(); return; }
+    const models = (el.dataset.models || '').split(',').filter(Boolean);
+    showTip(el.dataset.tip || '模型', models);
+  });
+  document.addEventListener('mousemove', e => {
+    if(!tip.classList.contains('show')) return;
+    const pad = 14;
+    const tw = 260, th = 120; // 预估尺寸用于边缘翻转
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if(x + tw > window.innerWidth) x = e.clientX - tw - pad;
+    if(y + th > window.innerHeight) y = e.clientY - th - pad;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  });
+  document.addEventListener('mouseout', e => {
+    if(e.target.closest && !e.target.closest('[data-tip]')) hideTip();
+  });
+  window.addEventListener('scroll', hideTip, true);
+  window.addEventListener('resize', hideTip);
+})();
 
 /* ===== 初始化 ===== */
 document.getElementById('searchBox').addEventListener('input', e => { state.q = e.target.value.trim(); renderModels(); });

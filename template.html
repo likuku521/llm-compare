@@ -27,6 +27,57 @@
   --shadow:0 20px 60px rgba(0,0,0,.5);
   --font:"Inter","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
 }
+/* ===== 白天模式（html[data-theme="light"] 变量覆盖）===== */
+html[data-theme="light"]{
+  --bg:#F4F6FB; --bg2:#EEF1F8; --bg3:#E3E8F3;
+  --card:rgba(255,255,255,.72); --card2:rgba(255,255,255,.92); --card3:#FFFFFF;
+  --glass:rgba(255,255,255,.78);
+  --line:rgba(22,32,64,.10); --line-strong:rgba(22,32,64,.20);
+  --ink:#182136; --muted:#5A6478; --dim:#8A94AC;
+  --gold:#B8860B; --gold2:#8F6500; --gold-dim:rgba(184,134,11,.13);
+  --cyan:#0284C7; --cyan-dim:rgba(2,132,199,.10);
+  --violet:#6D5BD0; --violet-dim:rgba(109,91,208,.10);
+  --s:#B8860B; --a:#0284C7; --b:#059669; --c:#64748B;
+  --s-dim:rgba(184,134,11,.14); --a-dim:rgba(2,132,199,.12);
+  --b-dim:rgba(5,150,105,.12); --c-dim:rgba(100,116,139,.14);
+  --ok:#059669; --warn:#D97706; --danger:#DC2626;
+  --shadow:0 12px 40px rgba(24,33,54,.12);
+}
+/* light 下背景光晕/点阵调淡 */
+html[data-theme="light"] body::before{opacity:.55}
+html[data-theme="light"] body::after{background-image:radial-gradient(rgba(24,33,54,.05) 1px,transparent 1px)}
+/* light 下玻璃/特殊元素 */
+html[data-theme="light"] .toolbar{background:rgba(255,255,255,.82);box-shadow:0 10px 34px rgba(24,33,54,.10)}
+html[data-theme="light"] thead th{background:rgba(238,241,248,.85)}
+html[data-theme="light"] .modal{background:linear-gradient(165deg,#FFFFFF,#F2F5FB);border-color:rgba(184,134,11,.28);box-shadow:0 24px 80px rgba(24,33,54,.22)}
+html[data-theme="light"] .chart-tip{background:rgba(255,255,255,.97);border-color:rgba(184,134,11,.32);box-shadow:0 12px 40px rgba(24,33,54,.16)}
+html[data-theme="light"] .reco{background:linear-gradient(135deg,rgba(184,134,11,.08),rgba(2,132,199,.04))}
+html[data-theme="light"] .live-head{background:linear-gradient(135deg,rgba(5,150,105,.07),rgba(2,132,199,.05))}
+html[data-theme="light"] .stat-hero .hero-num{background:linear-gradient(115deg,#C9A227,var(--gold) 55%,#9A6A00);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+html[data-theme="light"] .hero h1{background:linear-gradient(115deg,#6B4E00 10%,#B8860B 38%,#8F6500 60%,#C9A227 90%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:none}
+html[data-theme="light"] .donut-center .dc-num{color:var(--ink)}
+html[data-theme="light"] .mcard{background:rgba(255,255,255,.75);box-shadow:0 6px 24px rgba(24,33,54,.07)}
+html[data-theme="light"] .toolcard{background:rgba(255,255,255,.75);box-shadow:0 6px 24px rgba(24,33,54,.07)}
+html[data-theme="light"] .live-card{background:rgba(255,255,255,.75)}
+html[data-theme="light"] .stat{background:rgba(255,255,255,.7)}
+html[data-theme="light"] .mcard:hover,.toolcard:hover{border-color:rgba(184,134,11,.4);box-shadow:0 14px 40px rgba(24,33,54,.12)}
+html[data-theme="light"] .fgroup{background:rgba(24,33,54,.04);border-color:rgba(22,32,64,.12)}
+html[data-theme="light"] .searchbox,.sortbox{background:rgba(255,255,255,.85);border-color:rgba(22,32,64,.15);color:var(--ink)}
+html[data-theme="light"] .sortbox option{background:#fff}
+html[data-theme="light"] .bs-track{background:rgba(24,33,54,.06)}
+html[data-theme="light"] .mcard .mc-best{color:#3A4660}
+html[data-theme="light"] .mcard .mc-vendor{color:#6B7690}
+html[data-theme="light"] .mcard .mc-tags .tag{background:rgba(24,33,54,.05);color:#4A5670;border-color:rgba(24,33,54,.12)}
+html[data-theme="light"] .mcard .mc-tags .tag.think{background:rgba(184,134,11,.1);color:#8F6500;border-color:rgba(184,134,11,.3)}
+html[data-theme="light"] .tip-models .tm{background:rgba(24,33,54,.05);border-color:rgba(24,33,54,.12);color:#4A5670}
+html[data-theme="light"] .chart-tip .tip-models{color:#3A4660}
+html[data-theme="light"] .radar-labels .rl-row{color:#5A6478}
+html[data-theme="light"] .radar-labels .rl-row b{color:var(--ink)}
+html[data-theme="light"] .barstack .bs-row{color:#5A6478}
+/* light 下 SVG 图表元素（网格线/轴线/雷达） */
+html[data-theme="light"] .radar-svg polygon[fill="none"], html[data-theme="light"] .radar-svg line{stroke:rgba(24,33,54,.14)!important}
+html[data-theme="light"] .donut-arc{filter:none}
+html[data-theme="light"] .dc-num{color:var(--ink)}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
@@ -248,6 +299,9 @@ tbody tr:last-child td{border-bottom:none}
 .viewmode{display:flex;gap:4px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:3px;margin-left:auto}
 .viewmode .vm-btn{cursor:pointer;padding:5px 12px;border-radius:8px;font-size:12px;color:var(--muted);transition:all .2s;border:none;background:none;font-family:inherit}
 .viewmode .vm-btn.on{background:var(--gold-dim);color:var(--gold2);font-weight:700}
+.viewmode .theme-toggle{font-size:14px;padding:5px 10px;transition:transform .3s}
+.viewmode .theme-toggle:hover{transform:rotate(20deg) scale(1.1);color:var(--gold2)}
+html[data-theme="light"] .viewmode{background:rgba(24,33,54,.05);border-color:rgba(22,32,64,.14)}
 
 /* ===== 空态 ===== */
 .empty{text-align:center;padding:80px 20px;color:var(--muted)}
@@ -383,6 +437,7 @@ footer .src p{margin:3px 0;line-height:1.8}
     <div class="viewmode" id="viewMode">
       <button class="vm-btn on" id="vmCards" onclick="setMode('cards')">▦ 卡片</button>
       <button class="vm-btn" id="vmTable" onclick="setMode('table')">☰ 表格</button>
+      <button class="vm-btn theme-toggle" id="themeBtn" onclick="toggleTheme()" title="切换黑夜/白天模式">🌙</button>
     </div>
   </div>
   <div class="tb-row2">
@@ -412,6 +467,17 @@ footer .src p{margin:3px 0;line-height:1.8}
 <div class="modal-mask" id="modalMask" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modalBody"></div>
 </div>
+
+<script>
+/* 主题初始化（提前执行防闪烁）：localStorage → 系统偏好 → dark */
+(function(){
+  try{
+    var t = localStorage.getItem('llm-theme');
+    if(!t) t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
 
 <script id="app-data" type="application/json">__DATA_JSON__</script>
 <script>

@@ -750,11 +750,30 @@ TOOLS.forEach(t => {
     <div class="tip-notes">⭐ ${esc(t.highlight)}</div>`;
 });
 
+/* ===== 主题切换（黑夜/白天）===== */
+function currentTheme(){
+  return document.documentElement.getAttribute('data-theme') || 'dark';
+}
+function toggleTheme(){
+  const next = currentTheme() === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try{ localStorage.setItem('llm-theme', next); }catch(e){}
+  syncThemeBtn();
+}
+function syncThemeBtn(){
+  const btn = document.getElementById('themeBtn');
+  if(!btn) return;
+  const dark = currentTheme() === 'dark';
+  btn.textContent = dark ? '🌙' : '☀️';
+  btn.title = dark ? '切换到白天模式' : '切换到黑夜模式';
+}
+
 /* ===== 初始化 ===== */
 document.getElementById('searchBox').addEventListener('input', e => { state.q = e.target.value.trim(); renderModels(); });
 document.getElementById('sortBox').addEventListener('change', e => { state.sort = e.target.value; renderModels(); });
 renderStats();
 buildFilters();
 renderModels();
+syncThemeBtn();
 fetchLive();
 fetchFx();  // 异步拉取实时汇率，失败自动回退 meta 固定值

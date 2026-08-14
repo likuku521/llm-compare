@@ -66,6 +66,55 @@ function mmIcon(m){
   return h || '<i>—</i>';
 }
 function costClass(c){return c==='低'?'low':(c==='中'?'mid':'high');}
+/* ===== 六边形雷达图（纯 SVG，无依赖）===== */
+function radarData(m){
+  const gs = META.gradeScore[m.grade]||0;           // 5/4/3/2
+  const reasoning = (gs/5)*70 + (m.thinking?30:0);  // 等级70 + 思考30
+  const code = (m.strengths||[]).some(s=>/代码|编程/.test(s)) ? 100 : (m.scenes.includes('代码')?80:40);
+  const ctx = Math.min(100, m.contextVal/10);       // 1M=100
+  const mm = m.multimodal.includes('视频')?100 : m.multimodal.includes('音频')?90 : m.multimodal.includes('图像')?75 : 40;
+  const value = m.cost==='低'?95 : m.cost==='中'?70 : 45;
+  const scenes = Math.min(100, m.scenes.length*12 + (m.country==='中国'?10:0));
+  return {labels:['推理','代码','上下文','多模态','性价比','场景'], vals:[reasoning, code, ctx, mm, value, scenes]};
+}
+function toolRadarData(t){
+  const cnt = (t.builtinModels||[]).length;
+  const desc = (t.desc||'') + (t.modelMode||'') + (t.type||'');
+  const diversity = Math.min(100, cnt*9);
+  const agent = /Agent|智能体|SOLO|自主|自动化/.test(desc) ? 90 : /工作台|助手/.test(desc)?70:50;
+  const office = /办公|文档|表格|PPT|邮件|工作|数据/.test(desc) ? 90 : 40;
+  const code = /代码|编程|IDE|开发|Coding/.test(desc) ? 90 : 45;
+  const eco = /腾讯|字节|阿里|GitHub|Google|OpenAI|生态/.test(t.vendor+t.desc) ? 85 : 55;
+  const easy = /网页|Web|三端|浏览器|网页版/.test(t.desc+t.platform) ? 90 : (t.platform.split('/').length>=3?85:70);
+  return {labels:['模型池','智能体','办公','代码','生态','易用性'], vals:[diversity, agent, office, code, eco, easy]};
+}
+function radarSvg(vals, color, size){
+  const cx=50, cy=50, R=40;
+  const N=6;
+  const ang = i => -Math.PI/2 + i*2*Math.PI/N;
+  const pt = (i, r) => [cx + Math.cos(ang(i))*r, cy + Math.sin(ang(i))*r].map(x=>x.toFixed(2)).join(',');
+  let grid='';
+  for(let l=1;l<=4;l++){
+    const rr=R*l/4;
+    const pts=[]; for(let i=0;i<N;i++) pts.push(pt(i,rr));
+    grid+=`<polygon points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,.09)" stroke-width="1"/>`;
+  }
+  let axes='';
+  for(let i=0;i<N;i++){ const [x,y]=pt(i,R).split(','); axes+=`<line x1="50" y1="50" x2="${x}" y2="${y}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`; }
+  const dp=[]; const dp2=[];
+  for(let i=0;i<N;i++){
+    const r=R*Math.max(.04,Math.min(1,(vals[i]||0)/100));
+    dp.push(pt(i,r)); dp2.push(pt(i,r).split(','));
+  }
+  const data=`<polygon points="${dp.join(' ')}" fill="${color}2e" stroke="${color}" stroke-width="2.2" stroke-linejoin="round"/>`;
+  let dots='';
+  for(let i=0;i<N;i++){ const [x,y]=dp2[i]; dots+=`<circle cx="${x}" cy="${y}" r="2.4" fill="${color}"/>`; }
+  return `<svg viewBox="0 0 100 100" class="radar-svg" style="width:${size}px;height:${size}px">${grid}${axes}${data}${dots}</svg>`;
+}
+function radarBlock(rd, color, size){
+  const rows = rd.labels.map((l,i)=>`<span class="rl-row"><span class="rl-dot" style="background:${color}"></span>${l}<b>${rd.vals[i]}</b></span>`).join('');
+  return `<div class="radar-block"><div class="radar-fig">${radarSvg(rd.vals, color, size)}</div><div class="radar-labels">${rows}</div></div>`;
+}
 /* 费用显示：优先匹配 OpenRouter 实时价格（¥/1M），未匹配回落定性费用 */
 function costDisplay(m){
   const p = findLivePrice(m);
@@ -209,6 +258,7 @@ function renderCards(list){
           <div class="mc-name">${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
           <div class="mc-vendor">${esc(m.vendorCn || m.vendor)} · ${fmtCtx(m.contextVal)} · <span class="mc-price">💱 ${costDisplay(m)}</span>${m.thinking?' · 🧠思考':''}</div>
         </div>
+        <div class="mc-radar" title="六维能力分析">${radarSvg(radarData(m).vals, gradeColor(m.grade), 76)}</div>
       </div>
       <p class="mc-best">${esc(m.bestFor)}</p>
       <div class="mc-ctx">
@@ -270,8 +320,13 @@ function renderTools(){
   const cards = TOOLS.map((t, i) => {
     const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
     return `<div class="toolcard rise" style="animation-delay:${Math.min(i*60,400)}ms" data-mid="tool-${t.id}" data-tip-key="tool:${t.id}">
-      <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
-      <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
+      <div class="tc-top">
+        <div>
+          <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
+          <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
+        </div>
+        <div class="tc-radar" title="六维能力分析">${radarSvg(toolRadarData(t).vals, 'var(--cyan)', 72)}</div>
+      </div>
       <div class="t-desc">${esc(t.desc)}</div>
       <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
       <div class="t-mode">模型选择：<b>${esc(t.modelSelect)}</b></div>
@@ -435,6 +490,7 @@ function openModal(id){
       <div class="m-item"><div class="k">费用水平</div><div class="v">${m.cost}</div></div>
     </div>
     <div class="m-sec"><h4>💡 一句话选型</h4><p>${esc(m.bestFor)}</p></div>
+    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(radarData(m), gradeColor(m.grade), 170)}</div></div>
     <div class="m-sec"><h4>🎯 适用场景</h4><div class="m-row">${m.scenes.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div></div>
     <div class="m-sec"><h4>🏆 擅长领域</h4><div class="m-row">${m.strengths.map(s=>`<span class="tag think">${esc(s)}</span>`).join('')}</div></div>
     <div class="m-sec"><h4>🧩 内置此模型的 Agent 工具</h4><div class="m-row">${toolStr}</div></div>

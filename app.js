@@ -253,11 +253,12 @@ function isLocalModel(orId){
 function fmtPricePerM(p){
   const n = parseFloat(p);
   if(isNaN(n) || n < 0) return '—';
-  const perM = n * 1e6;
-  if(perM === 0) return '$0';
-  if(perM < 0.01) return '$'+perM.toFixed(3);
-  if(perM < 1) return '$'+perM.toFixed(2);
-  return '$'+perM.toFixed(0);
+  const perM = n * 1e6 * (META.exchangeRate || 7.2);  // 美元 → 人民币
+  if(perM === 0) return '¥0';
+  if(perM < 0.01) return '¥'+perM.toFixed(3);
+  if(perM < 1) return '¥'+perM.toFixed(2);
+  if(perM < 100) return '¥'+perM.toFixed(1);
+  return '¥'+Math.round(perM);
 }
 function liveModality(mods){
   const m = mods || [];
@@ -310,7 +311,7 @@ function renderLive(){
     ${liveSection('🆕 最新上线', newest, 'created')}
     ${liveSection('🚀 超长上下文 (1M+)', bigCtx, 'ctx')}
     ${liveSection('💰 低价精选 (≥128K 上下文)', cheap, 'price')}
-    <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 $/1M tokens。</div>
+    <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 ¥/1M tokens（按汇率 ${META.exchangeRate||7.2} 折算）。</div>
   </div>`;
 }
 

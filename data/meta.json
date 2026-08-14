@@ -2,6 +2,8 @@
   "title": "大模型多维对比总览",
   "subtitle": "性能 · 上下文 · 多模态 · 场景 · 擅长领域 · Agent 工具内置模型 — 一眼分辨",
   "updated": "2026-08-11",
+  "exchangeRate": 7.2,
+  "currency": "CNY",
   "gradeDef": {
     "S": { "label": "旗舰", "color": "#e94560", "desc": "综合能力第一梯队" },
     "A": { "label": "优秀", "color": "#f59e0b", "desc": "能力突出，性价比之选" },

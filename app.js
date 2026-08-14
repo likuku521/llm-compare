@@ -115,6 +115,9 @@ function radarBlock(rd, color, size){
   const rows = rd.labels.map((l,i)=>`<span class="rl-row"><span class="rl-dot" style="background:${color}"></span>${l}<b>${rd.vals[i]}</b></span>`).join('');
   return `<div class="radar-block"><div class="radar-fig">${radarSvg(rd.vals, color, size)}</div><div class="radar-labels">${rows}</div></div>`;
 }
+/* 雷达图固定亮色（不随主题变深，白天/黑夜一致——与模型总览等级色同风格） */
+const RADAR_TOOL_COLOR = '#4FD8FF';    // 工具卡
+const RADAR_LIVE_COLOR = '#4FD8FF';    // 实时动态卡
 /* 费用显示：优先匹配 OpenRouter 实时价格（¥/1M），未匹配回落定性费用 */
 function costDisplay(m){
   const p = findLivePrice(m);
@@ -325,7 +328,7 @@ function renderTools(){
           <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
           <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
         </div>
-        <div class="tc-radar" title="六维能力分析">${radarSvg(toolRadarData(t).vals, 'var(--cyan)', 72)}</div>
+        <div class="tc-radar" title="六维能力分析">${radarSvg(toolRadarData(t).vals, RADAR_TOOL_COLOR, 72)}</div>
       </div>
       <div class="t-desc">${esc(t.desc)}</div>
       <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
@@ -459,7 +462,7 @@ function liveSection(title, list, kind){
           <div class="live-mm">${liveModality(m.architecture?.input_modalities)}${m.reasoning?.supported_efforts ? ' 🧠推理' : ''}</div>
           <div class="live-sub">${sub} · ${esc(liveVendor(m.id))}</div>
         </div>
-        <div class="lc-radar" title="六维能力分析">${radarSvg(liveRadarData(m).vals, 'var(--cyan)', 66)}</div>
+        <div class="lc-radar" title="六维能力分析">${radarSvg(liveRadarData(m).vals, RADAR_LIVE_COLOR, 66)}</div>
       </div>
     </div>`;
   }).join('');
@@ -481,7 +484,7 @@ function openLive(id){
       <div class="m-item"><div class="k">知识截止</div><div class="v">${m.knowledge_cutoff || '—'}</div></div>
     </div>
     <div class="m-sec"><h4>🔧 输入模态</h4><div class="m-row"><span class="tag">${liveModality(mods) || '文本'}</span>${m.reasoning?.supported_efforts ? '<span class="tag think">🧠 支持推理模式</span>' : ''}</div></div>
-    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(m), 'var(--cyan)', 170)}</div></div>
+    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(m), RADAR_LIVE_COLOR, 170)}</div></div>
     <div class="m-sec"><h4>📅 上线时间</h4><p>${m.created ? new Date(m.created*1000).toLocaleString('zh-CN') : '未知'}</p></div>
     ${m.description ? `<div class="m-sec"><h4>📝 官方描述</h4><p>${esc(m.description.slice(0,300))}</p></div>` : ''}
     ${local ? `<div class="m-sec"><h4>🔗 本站档案</h4><p>此模型已有本地实测档案，<a href="#" onclick="closeModal();openModal('${local.id}');return false;">点击查看</a>（等级/场景/Agent工具）</p></div>` : ''}

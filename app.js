@@ -22,6 +22,37 @@ const state = {
   modalId: null
 };
 
+/* ===== 实时汇率（fetchFx：open.er-api.com 免费无 key）===== */
+let FX = META.exchangeRate || 7.2;         // 当前汇率（初始用 meta 固定值兜底）
+let FX_SOURCE = 'meta:' + FX;              // 汇率来源描述
+let FX_TIME = null;                        // 汇率更新时间戳
+const FX_API = 'https://open.er-api.com/v6/latest/USD';
+
+async function fetchFx(){
+  try{
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(FX_API, {signal: ctrl.signal});
+    clearTimeout(timer);
+    const d = await res.json();
+    const cny = d && d.rates && d.rates.CNY;
+    if(cny && cny > 1 && cny < 30){       // 合理区间校验
+      FX = parseFloat(cny);
+      FX_SOURCE = 'open.er-api.com';
+      FX_TIME = d.time_last_update_unix ? d.time_last_update_unix*1000 : Date.now();
+    }
+  }catch(e){ /* 网络失败：保持 meta 兜底汇率 */ }
+  renderFxBadge();
+  if(LIVE_LOADED && state.view === 'live') renderLive();   // 汇率更新后重渲染价格
+}
+function renderFxBadge(){
+  const el = document.getElementById('fxBadge');
+  if(!el) return;
+  const src = FX_SOURCE.startsWith('meta') ? '固定值' : '实时API';
+  const t = FX_TIME ? new Date(FX_TIME).toLocaleTimeString('zh-CN',{hour12:false}) : '';
+  el.innerHTML = `💱 汇率 <b>${FX.toFixed(3)}</b> <span class="fx-src">${src}${t?' · '+t:''}</span>`;
+}
+
 /* ===== 工具函数 ===== */
 function esc(s){return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function gradeColor(g){return META.gradeDef[g] ? META.gradeDef[g].color : '#7A87A6';}
@@ -253,7 +284,7 @@ function isLocalModel(orId){
 function fmtPricePerM(p){
   const n = parseFloat(p);
   if(isNaN(n) || n < 0) return '—';
-  const perM = n * 1e6 * (META.exchangeRate || 7.2);  // 美元 → 人民币
+  const perM = n * 1e6 * FX;  // 美元 → 人民币（FX 实时汇率，见 fetchFx）
   if(perM === 0) return '¥0';
   if(perM < 0.01) return '¥'+perM.toFixed(3);
   if(perM < 1) return '¥'+perM.toFixed(2);
@@ -311,7 +342,7 @@ function renderLive(){
     ${liveSection('🆕 最新上线', newest, 'created')}
     ${liveSection('🚀 超长上下文 (1M+)', bigCtx, 'ctx')}
     ${liveSection('💰 低价精选 (≥128K 上下文)', cheap, 'price')}
-    <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 ¥/1M tokens（按汇率 ${META.exchangeRate||7.2} 折算）。</div>
+    <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 ¥/1M tokens（实时汇率 ${FX.toFixed(3)} 折算，见页首）。</div>
   </div>`;
 }
 
@@ -653,3 +684,4 @@ renderStats();
 buildFilters();
 renderModels();
 fetchLive();
+fetchFx();  // 异步拉取实时汇率，失败自动回退 meta 固定值

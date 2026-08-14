@@ -66,6 +66,21 @@ function mmIcon(m){
   return h || '<i>—</i>';
 }
 function costClass(c){return c==='低'?'low':(c==='中'?'mid':'high');}
+/* 费用显示：优先匹配 OpenRouter 实时价格（¥/1M），未匹配回落定性费用 */
+function costDisplay(m){
+  const p = findLivePrice(m);
+  if(p !== null) return fmtPricePerM(p);
+  return m.cost + '费用';
+}
+function findLivePrice(m){
+  if(!LIVE || !LIVE.length) return null;
+  const slug = m.id.toLowerCase();
+  const hit = LIVE.find(x => {
+    const s = (x.id.split('/').pop() || '').toLowerCase();
+    return s === slug || s.startsWith(slug) || s.includes(slug);
+  });
+  return hit ? (hit.pricing && hit.pricing.prompt) : null;
+}
 function toolBadges(model){
   const ids = model.tools || [];
   if(!ids.length) return '<span style="color:var(--dim);font-size:11px">未内置</span>';
@@ -192,7 +207,7 @@ function renderCards(list){
         <div class="mc-grade" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
         <div>
           <div class="mc-name">${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
-          <div class="mc-vendor">${esc(m.vendorCn || m.vendor)} · ${fmtCtx(m.contextVal)} · ${m.cost}费用${m.thinking?' · 🧠思考':''}</div>
+          <div class="mc-vendor">${esc(m.vendorCn || m.vendor)} · ${fmtCtx(m.contextVal)} · <span class="mc-price">💱 ${costDisplay(m)}</span>${m.thinking?' · 🧠思考':''}</div>
         </div>
       </div>
       <p class="mc-best">${esc(m.bestFor)}</p>
@@ -221,7 +236,7 @@ function renderTable(list){
       <td class="ctx-cell"><div class="ctxbar"><div class="bar"><div class="fill" style="width:${Math.min(100, m.contextVal/10)}%"></div></div><span class="txt">${fmtCtx(m.contextVal)}</span></div></td>
       <td><div class="mm">${mmIcon(m.multimodal)}</div></td>
       <td>${m.thinking?'<span class="tag think">🧠 思考</span>':''}${(m.strengths||[]).slice(0,3).map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</td>
-      <td><span class="cost ${costClass(m.cost)}">${m.cost}</span></td>
+      <td><span class="cost ${costClass(m.cost)}">💱 ${costDisplay(m)}</span></td>
       <td><div class="toolcell">${toolBadges(m)}</div></td>
     </tr>`).join('');
   return `<div class="tbl-wrap"><table>
@@ -318,6 +333,8 @@ async function fetchLive(){
     LIVE_LOADED = false; LIVE = [];
   }
   renderLive();
+  // 汇率/实时价格到位后，模型视图的卡片费用也刷新
+  if(state.view === 'models') renderModels();
 }
 
 function renderLive(){

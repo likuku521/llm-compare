@@ -369,6 +369,27 @@ function liveModality(mods){
 }
 function liveVendor(id){ return id.split('/')[0] || '?'; }
 
+/* ===== 实时模型六维雷达（OpenRouter 硬指标推导）===== */
+function liveRadarData(m){
+  const ctx = Math.min(100, (m.context_length||0)/10000);          // 1M=100, 524K=52, 262K=26
+  const pIn = parseFloat(m.pricing?.prompt);                       // 输入价性价比（越低越高分）
+  const inScore = isNaN(pIn) ? 50 : Math.round(100 * (0.5 / (pIn*1e6 + 0.5)));
+  const pOut = parseFloat(m.pricing?.completion);
+  const outScore = isNaN(pOut) ? 50 : Math.round(100 * (1.5 / (pOut*1e6 + 1.5)));
+  const mods = m.architecture?.input_modalities || [];
+  let mm = 20;
+  if(mods.includes('image')) mm += 35;
+  if(mods.includes('audio')) mm += 25;
+  if(mods.includes('video')) mm += 20;
+  if(mods.includes('file')) mm += 10;
+  mm = Math.min(100, mm);
+  const r = m.reasoning || {};
+  const reason = r.mandatory ? 100 : (r.supported_efforts && r.supported_efforts.length ? 85 : (r.default_enabled ? 80 : 40));
+  const created = m.created || 0;
+  const fresh = created > 0 ? Math.round(Math.max(0, Math.min(100, (created - 1735689600) / 40000000 * 100))) : 50;  // 2025-01 起线性
+  return {labels:['上下文','输入价','输出价','多模态','推理','新颖度'], vals:[ctx, inScore, outScore, mm, reason, fresh]};
+}
+
 async function fetchLive(){
   try{
     const ctrl = new AbortController();
@@ -426,15 +447,20 @@ function liveSection(title, list, kind){
     const tag = local ? '<span class="have-tag">✓ 已收录</span>' : '<span class="new-tag">NEW</span>';
     const sub = kind==='created' ? `上线 ${created}` : (kind==='ctx' ? `${Math.round((m.context_length||0)/1000)}K` : fmtPricePerM(m.pricing?.prompt));
     return `<div class="live-card" style="animation-delay:${Math.min(i*70,600)}ms" onclick="openLive('${esc(m.id)}')">
-      <div class="live-top"><span class="live-name">${esc(m.name || m.id)}</span>${tag}</div>
-      <div class="live-id">${esc(m.id)}</div>
-      <div class="live-meta">
-        <span>上下文 <b>${Math.round((m.context_length||0)/1000)}K</b></span>
-        <span>输入 <b>${fmtPricePerM(m.pricing?.prompt)}</b></span>
-        <span>知识截止 <b>${cutoff}</b></span>
+      <div class="lc-body">
+        <div class="lc-info">
+          <div class="live-top"><span class="live-name">${esc(m.name || m.id)}</span>${tag}</div>
+          <div class="live-id">${esc(m.id)}</div>
+          <div class="live-meta">
+            <span>上下文 <b>${Math.round((m.context_length||0)/1000)}K</b></span>
+            <span>输入 <b>${fmtPricePerM(m.pricing?.prompt)}</b></span>
+            <span>知识截止 <b>${cutoff}</b></span>
+          </div>
+          <div class="live-mm">${liveModality(m.architecture?.input_modalities)}${m.reasoning?.supported_efforts ? ' 🧠推理' : ''}</div>
+          <div class="live-sub">${sub} · ${esc(liveVendor(m.id))}</div>
+        </div>
+        <div class="lc-radar" title="六维能力分析">${radarSvg(liveRadarData(m).vals, 'var(--cyan)', 66)}</div>
       </div>
-      <div class="live-mm">${liveModality(m.architecture?.input_modalities)}${m.reasoning?.supported_efforts ? ' 🧠推理' : ''}</div>
-      <div class="live-sub">${sub} · ${esc(liveVendor(m.id))}</div>
     </div>`;
   }).join('');
   return `<div class="live-sec"><h3>${title} <span class="live-count">${list.length}</span></h3><div class="live-grid">${cards}</div></div>`;
@@ -455,6 +481,7 @@ function openLive(id){
       <div class="m-item"><div class="k">知识截止</div><div class="v">${m.knowledge_cutoff || '—'}</div></div>
     </div>
     <div class="m-sec"><h4>🔧 输入模态</h4><div class="m-row"><span class="tag">${liveModality(mods) || '文本'}</span>${m.reasoning?.supported_efforts ? '<span class="tag think">🧠 支持推理模式</span>' : ''}</div></div>
+    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(m), 'var(--cyan)', 170)}</div></div>
     <div class="m-sec"><h4>📅 上线时间</h4><p>${m.created ? new Date(m.created*1000).toLocaleString('zh-CN') : '未知'}</p></div>
     ${m.description ? `<div class="m-sec"><h4>📝 官方描述</h4><p>${esc(m.description.slice(0,300))}</p></div>` : ''}
     ${local ? `<div class="m-sec"><h4>🔗 本站档案</h4><p>此模型已有本地实测档案，<a href="#" onclick="closeModal();openModal('${local.id}');return false;">点击查看</a>（等级/场景/Agent工具）</p></div>` : ''}

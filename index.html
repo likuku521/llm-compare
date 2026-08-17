@@ -74,6 +74,8 @@ html[data-theme="light"] .chart-tip .tip-models{color:#3A4660}
 html[data-theme="light"] .radar-labels .rl-row{color:#5A6478}
 html[data-theme="light"] .radar-labels .rl-row b{color:var(--ink)}
 html[data-theme="light"] .barstack .bs-row{color:#5A6478}
+html[data-theme="light"] .t-eco{background:rgba(2,132,199,.08);border-color:rgba(2,132,199,.3);color:#3A4660}
+html[data-theme="light"] .t-eco b{color:#0284C7}
 /* light 下 SVG 图表元素（网格线/轴线/雷达） */
 html[data-theme="light"] .radar-svg polygon[fill="none"], html[data-theme="light"] .radar-svg line{stroke:rgba(24,33,54,.14)!important}
 html[data-theme="light"] .donut-arc{filter:none}
@@ -333,6 +335,10 @@ html[data-theme="light"] .viewmode{background:rgba(24,33,54,.05);border-color:rg
 .radar-labels .rl-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
 .radar-labels .rl-row b{margin-left:auto;color:var(--ink);font-variant-numeric:tabular-nums;font-weight:700}
 .toolcard .t-desc{font-size:13px;color:#C3CCE0;margin-bottom:11px;line-height:1.7}
+.t-eco{font-size:11.5px;color:var(--muted);background:var(--cyan-dim);border:1px solid rgba(79,216,255,.25);border-radius:8px;padding:5px 10px;margin-bottom:10px;line-height:1.6;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.t-eco b{color:var(--cyan);font-weight:700}
+.t-eco .eco-hot{color:var(--gold2);background:var(--gold-dim);border-radius:5px;padding:0 6px}
+.t-eco .eco-live{font-size:9px;font-weight:800;background:var(--ok);color:#0A0E1A;border-radius:4px;padding:1px 6px;margin-left:auto;letter-spacing:.5px;animation:pulse 1.8s infinite}
 .toolcard .t-mode{font-size:12px;color:var(--muted);margin-bottom:8px}
 .toolcard .t-mode b{color:var(--gold2);font-weight:600}
 .toolcard .t-models{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
@@ -1581,7 +1587,11 @@ footer .src p{margin:3px 0;line-height:1.8}
     "deepseek-v4-pro"
    ],
    "highlight": "选型建议：轻办公→Hy3(免费)；长文档→GLM-5.2；难任务→Kimi-K3；写代码→DeepSeek-V4-Flash；GLM-5.1/5V、MiniMax-M3、K2.7/K2.6 不建议主力",
-   "source": "workbuddy.cn 官方文档 + 实测评价（2026-08）"
+   "source": "workbuddy.cn 官方文档 + 实测评价（2026-08）",
+   "liveVendors": [
+    "tencent",
+    "hunyuan"
+   ]
   },
   {
    "id": "qoder",
@@ -1598,7 +1608,12 @@ footer .src p{margin:3px 0;line-height:1.8}
     "qwen-3.5"
    ],
    "highlight": "Qwen3.8-Max 全端首发（2.4T 参数）；共享 Qoder Credits 余额",
-   "source": "qoder.com / docs.qoder.com 官方（2026-08）"
+   "source": "qoder.com / docs.qoder.com 官方（2026-08）",
+   "liveVendors": [
+    "qoder",
+    "qwen",
+    "alibaba"
+   ]
   },
   {
    "id": "trae",
@@ -1615,7 +1630,12 @@ footer .src p{margin:3px 0;line-height:1.8}
     "doubao-3"
    ],
    "highlight": "Seed 系列模型会员享 2.5 折；Work 模式面向非开发用户",
-   "source": "trae.cn / docs.trae.cn 官方（2026-08）"
+   "source": "trae.cn / docs.trae.cn 官方（2026-08）",
+   "liveVendors": [
+    "bytedance-seed",
+    "doubao",
+    "seed"
+   ]
   },
   {
    "id": "cursor",
@@ -1639,7 +1659,16 @@ footer .src p{margin:3px 0;line-height:1.8}
     "gemini-3-pro"
    ],
    "highlight": "Agent 模式标杆；模型可自由切换与 BYOK",
-   "source": "cursor.com 公开信息（2026-08）"
+   "source": "cursor.com 公开信息（2026-08）",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "google",
+    "deepseek",
+    "z-ai",
+    "moonshotai",
+    "qwen"
+   ]
   },
   {
    "id": "claude-code",
@@ -1656,7 +1685,10 @@ footer .src p{margin:3px 0;line-height:1.8}
     "claude-haiku-4.5"
    ],
    "highlight": "Agent 场景公认标杆；长上下文 + 稳定工具调用",
-   "source": "anthropic.com 公开信息（2026-08）"
+   "source": "anthropic.com 公开信息（2026-08）",
+   "liveVendors": [
+    "anthropic"
+   ]
   },
   {
    "id": "gemini-cli",
@@ -1672,7 +1704,10 @@ footer .src p{margin:3px 0;line-height:1.8}
     "gemini-3-flash"
    ],
    "highlight": "1M 上下文 + 多模态 + 搜索增强",
-   "source": "google 公开信息（2026-08）"
+   "source": "google 公开信息（2026-08）",
+   "liveVendors": [
+    "google"
+   ]
   },
   {
    "id": "codex",
@@ -1688,7 +1723,10 @@ footer .src p{margin:3px 0;line-height:1.8}
     "gpt-5.2-mini"
    ],
    "highlight": "GitHub 深度集成；云端沙箱自动运行代码",
-   "source": "openai.com 公开信息（2026-08）"
+   "source": "openai.com 公开信息（2026-08）",
+   "liveVendors": [
+    "openai"
+   ]
   },
   {
    "id": "copilot",
@@ -1705,7 +1743,12 @@ footer .src p{margin:3px 0;line-height:1.8}
     "gpt-4.5"
    ],
    "highlight": "编辑器内无缝体验；补全延迟低",
-   "source": "github.com 公开信息（2026-08）"
+   "source": "github.com 公开信息（2026-08）",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "google"
+   ]
   },
   {
    "id": "windsurf",
@@ -1722,7 +1765,14 @@ footer .src p{margin:3px 0;line-height:1.8}
     "gpt-5.2"
    ],
    "highlight": "Cascade 深度上下文；跨文件连续编辑",
-   "source": "windsurf.com 公开信息（2026-08）"
+   "source": "windsurf.com 公开信息（2026-08）",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "google",
+    "deepseek",
+    "qwen"
+   ]
   }
  ]
 }</script>
@@ -2046,6 +2096,35 @@ function setMode(mode){
   renderModels();
 }
 
+/* ===== 工具生态动态（从 OpenRouter LIVE 实时统计）===== */
+function toolEcoStats(t){
+  if(!LIVE || !LIVE.length) return null;
+  const vs = (t.liveVendors || []).map(v => v.toLowerCase());
+  if(!vs.length) return null;
+  const eco = LIVE.filter(m => {
+    const v = (m.id.split('/')[0] || '').toLowerCase();
+    return vs.some(x => v === x || v.includes(x) || x.includes(v));
+  });
+  const now = Date.now() / 1000;
+  const weekAgo = now - 7*24*3600;
+  const recent = eco.filter(m => m.created > weekAgo);
+  const newest = eco.filter(m => m.created > 0).sort((a,b) => b.created - a.created)[0];
+  return {
+    count: eco.length,
+    recent7: recent.length,
+    newestName: newest ? (newest.name || newest.id) : null,
+    newestDays: newest ? Math.max(0, Math.round((now - newest.created)/86400)) : null
+  };
+}
+function toolEcoHTML(t){
+  const s = toolEcoStats(t);
+  if(!s) return '';
+  const live = LIVE_LOADED ? `<span class="eco-live">LIVE</span>` : '';
+  const recent = s.recent7 > 0 ? `<b class="eco-hot">+${s.recent7}</b> 近7天` : `<b>0</b> 近7天`;
+  const newest = s.newestName ? `最新 <b>${esc(s.newestName)}</b>${s.newestDays!==null?`（${s.newestDays}天前）`:''}` : '';
+  return `<div class="t-eco">📡 生态模型 ${s.count} 个 · ${recent}${newest?` · ${newest}`:''}${live}</div>`;
+}
+
 /* ===== 工具视图 ===== */
 function renderTools(){
   const wrap = document.getElementById('main');
@@ -2059,6 +2138,7 @@ function renderTools(){
         </div>
         <div class="tc-radar" title="六维能力分析">${radarSvg(toolRadarData(t).vals, RADAR_TOOL_COLOR, 72)}</div>
       </div>
+      ${toolEcoHTML(t)}
       <div class="t-desc">${esc(t.desc)}</div>
       <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
       <div class="t-mode">模型选择：<b>${esc(t.modelSelect)}</b></div>
@@ -2141,8 +2221,9 @@ async function fetchLive(){
     LIVE_LOADED = false; LIVE = [];
   }
   renderLive();
-  // 汇率/实时价格到位后，模型视图的卡片费用也刷新
+  // 汇率/实时价格到位后，模型视图的卡片费用也刷新；工具视图生态统计也刷新
   if(state.view === 'models') renderModels();
+  if(state.view === 'tools') renderTools();
 }
 
 function renderLive(){

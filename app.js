@@ -317,6 +317,35 @@ function setMode(mode){
   renderModels();
 }
 
+/* ===== 工具生态动态（从 OpenRouter LIVE 实时统计）===== */
+function toolEcoStats(t){
+  if(!LIVE || !LIVE.length) return null;
+  const vs = (t.liveVendors || []).map(v => v.toLowerCase());
+  if(!vs.length) return null;
+  const eco = LIVE.filter(m => {
+    const v = (m.id.split('/')[0] || '').toLowerCase();
+    return vs.some(x => v === x || v.includes(x) || x.includes(v));
+  });
+  const now = Date.now() / 1000;
+  const weekAgo = now - 7*24*3600;
+  const recent = eco.filter(m => m.created > weekAgo);
+  const newest = eco.filter(m => m.created > 0).sort((a,b) => b.created - a.created)[0];
+  return {
+    count: eco.length,
+    recent7: recent.length,
+    newestName: newest ? (newest.name || newest.id) : null,
+    newestDays: newest ? Math.max(0, Math.round((now - newest.created)/86400)) : null
+  };
+}
+function toolEcoHTML(t){
+  const s = toolEcoStats(t);
+  if(!s) return '';
+  const live = LIVE_LOADED ? `<span class="eco-live">LIVE</span>` : '';
+  const recent = s.recent7 > 0 ? `<b class="eco-hot">+${s.recent7}</b> 近7天` : `<b>0</b> 近7天`;
+  const newest = s.newestName ? `最新 <b>${esc(s.newestName)}</b>${s.newestDays!==null?`（${s.newestDays}天前）`:''}` : '';
+  return `<div class="t-eco">📡 生态模型 ${s.count} 个 · ${recent}${newest?` · ${newest}`:''}${live}</div>`;
+}
+
 /* ===== 工具视图 ===== */
 function renderTools(){
   const wrap = document.getElementById('main');
@@ -330,6 +359,7 @@ function renderTools(){
         </div>
         <div class="tc-radar" title="六维能力分析">${radarSvg(toolRadarData(t).vals, RADAR_TOOL_COLOR, 72)}</div>
       </div>
+      ${toolEcoHTML(t)}
       <div class="t-desc">${esc(t.desc)}</div>
       <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
       <div class="t-mode">模型选择：<b>${esc(t.modelSelect)}</b></div>
@@ -412,8 +442,9 @@ async function fetchLive(){
     LIVE_LOADED = false; LIVE = [];
   }
   renderLive();
-  // 汇率/实时价格到位后，模型视图的卡片费用也刷新
+  // 汇率/实时价格到位后，模型视图的卡片费用也刷新；工具视图生态统计也刷新
   if(state.view === 'models') renderModels();
+  if(state.view === 'tools') renderTools();
 }
 
 function renderLive(){

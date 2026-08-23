@@ -956,9 +956,9 @@
     "vendor": "Nous Research",
     "type": "通用 AI Agent 平台",
     "platform": "桌面 (Windows/macOS/Linux) + CLI",
-    "desc": "Nous Research 出品的 AI Agent 平台。支持技能（Skills）体系、多子代理并行委派、浏览器/终端自动化、定时任务（cron）、持久记忆与经验沉淀，可自主完成从需求到交付的完整工作流，是「AI 时代工具构建者」的核心生产工具。",
+    "desc": "Nous Research 出品的通用 AI Agent 平台。支持技能（Skills）体系、多子代理并行委派、浏览器/终端自动化、定时任务、持久记忆与经验沉淀，可自主完成从需求到交付的完整工作流，适合开发者、分析师、运营及各类专业工作者。",
     "modelMode": "多模型接入（内置 + BYOK）+ Provider 可配置",
-    "modelSelect": "按任务切换（当前示例：DeepSeek-V4-Flash）",
+    "modelSelect": "按任务自由切换（多模型可选）",
     "builtinModels": [
       "deepseek-v4-flash",
       "claude-4.6",

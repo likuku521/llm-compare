@@ -312,6 +312,11 @@ html[data-theme="light"] .viewmode{background:rgba(24,33,54,.05);border-color:rg
 @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
 /* ===== 工具视图 ===== */
+.cat-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.cat-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:600;transition:all .2s;backdrop-filter:blur(8px)}
+.cat-tab:hover{color:var(--ink);border-color:var(--line-strong)}
+.cat-tab.on{background:linear-gradient(135deg,rgba(245,201,107,.9),rgba(232,155,60,.88));color:#0A0E1A;font-weight:800;border-color:transparent;box-shadow:0 4px 18px rgba(245,201,107,.3)}
+.cat-count{font-size:11.5px;color:var(--dim);margin-left:auto}
 .toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:16px;perspective:1200px}
 .toolcard{background:var(--glass);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;transition:all .28s;backdrop-filter:blur(14px);position:relative;overflow:hidden;transform-style:preserve-3d}
 .toolcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;
@@ -1591,7 +1596,8 @@ footer .src p{margin:3px 0;line-height:1.8}
    "liveVendors": [
     "tencent",
     "hunyuan"
-   ]
+   ],
+   "category": "办公工作台"
   },
   {
    "id": "qoder",
@@ -1613,7 +1619,8 @@ footer .src p{margin:3px 0;line-height:1.8}
     "qoder",
     "qwen",
     "alibaba"
-   ]
+   ],
+   "category": "编程工具"
   },
   {
    "id": "trae",
@@ -1635,7 +1642,8 @@ footer .src p{margin:3px 0;line-height:1.8}
     "bytedance-seed",
     "doubao",
     "seed"
-   ]
+   ],
+   "category": "编程工具"
   },
   {
    "id": "cursor",
@@ -1668,7 +1676,8 @@ footer .src p{margin:3px 0;line-height:1.8}
     "z-ai",
     "moonshotai",
     "qwen"
-   ]
+   ],
+   "category": "编程工具"
   },
   {
    "id": "claude-code",
@@ -1688,7 +1697,8 @@ footer .src p{margin:3px 0;line-height:1.8}
    "source": "anthropic.com 公开信息（2026-08）",
    "liveVendors": [
     "anthropic"
-   ]
+   ],
+   "category": "编程工具"
   },
   {
    "id": "gemini-cli",
@@ -1707,7 +1717,8 @@ footer .src p{margin:3px 0;line-height:1.8}
    "source": "google 公开信息（2026-08）",
    "liveVendors": [
     "google"
-   ]
+   ],
+   "category": "其他"
   },
   {
    "id": "codex",
@@ -1726,7 +1737,8 @@ footer .src p{margin:3px 0;line-height:1.8}
    "source": "openai.com 公开信息（2026-08）",
    "liveVendors": [
     "openai"
-   ]
+   ],
+   "category": "编程工具"
   },
   {
    "id": "copilot",
@@ -1748,7 +1760,8 @@ footer .src p{margin:3px 0;line-height:1.8}
     "openai",
     "anthropic",
     "google"
-   ]
+   ],
+   "category": "编程工具"
   },
   {
    "id": "windsurf",
@@ -1772,7 +1785,740 @@ footer .src p{margin:3px 0;line-height:1.8}
     "google",
     "deepseek",
     "qwen"
-   ]
+   ],
+   "category": "编程工具"
+  },
+  {
+   "id": "aider",
+   "name": "Aider",
+   "vendor": "Aider AI",
+   "type": "开源终端 AI 编程",
+   "platform": "Windows/macOS/Linux",
+   "desc": "开源终端 AI 结对编程工具，直接在 git 仓库中编辑代码并自动提交，支持主流模型 API。",
+   "modelMode": "BYOK（自配 API Key）",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "claude-4.6",
+    "deepseek-v4",
+    "gpt-5.2"
+   ],
+   "highlight": "开源老牌终端 Agent，git 原生集成",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "deepseek"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "cline",
+   "name": "Cline",
+   "vendor": "Cline",
+   "type": "VSCode 开源 Agent",
+   "platform": "VSCode 插件",
+   "desc": "开源 VS Code 插件 Agent，可自主读写文件、执行命令、浏览器操作，BYOK 任意模型。",
+   "modelMode": "BYOK",
+   "modelSelect": "手动选择/自动路由",
+   "builtinModels": [
+    "claude-4.6",
+    "deepseek-v4",
+    "gemini-3-pro"
+   ],
+   "highlight": "开源社区最活跃的 VSCode Agent",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "google",
+    "deepseek"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "continue",
+   "name": "Continue",
+   "vendor": "Continue",
+   "type": "开源 IDE 插件",
+   "platform": "VSCode/JetBrains",
+   "desc": "开源 AI 代码助手，支持自定义模型、规则（Rules）、代码库索引，免费自部署。",
+   "modelMode": "BYOK + 本地模型",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "deepseek-v4",
+    "qwen-3.5",
+    "glm-5.2"
+   ],
+   "highlight": "开源免费，企业可自托管",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "deepseek",
+    "qwen"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "cody",
+   "name": "Cody",
+   "vendor": "Sourcegraph",
+   "type": "AI 编程助手",
+   "platform": "IDE 插件/网页",
+   "desc": "Sourcegraph 出品，深度代码库理解，支持代码搜索增强的上下文召回。",
+   "modelMode": "内置多模型",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "claude-4.6",
+    "gpt-5.2"
+   ],
+   "highlight": "代码库语义理解强",
+   "liveVendors": [
+    "anthropic",
+    "openai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "amazon-q",
+   "name": "Amazon Q Developer",
+   "vendor": "AWS",
+   "type": "AI 编程助手",
+   "platform": "IDE 插件/CLI",
+   "desc": "AWS 出品，CodeWhisperer 升级版，深度集成 AWS 云开发，支持 Agent 模式。",
+   "modelMode": "内置 + AWS 生态",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "claude-4.6"
+   ],
+   "highlight": "AWS 云开发首选",
+   "liveVendors": [
+    "anthropic",
+    "amazon"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "jetbrains-ai",
+   "name": "JetBrains AI Assistant",
+   "vendor": "JetBrains",
+   "type": "IDE 内置 AI",
+   "platform": "JetBrains 全家桶",
+   "desc": "JetBrains IDE 内置 AI 助手，深度集成 IDE 上下文，支持代码补全/重构/解释。",
+   "modelMode": "订阅内置",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "gpt-5.2",
+    "claude-4.6"
+   ],
+   "highlight": "JetBrains 生态原生集成",
+   "liveVendors": [
+    "openai",
+    "anthropic"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "zed",
+   "name": "Zed",
+   "vendor": "Zed Industries",
+   "type": "AI 原生编辑器",
+   "platform": "Windows/macOS/Linux",
+   "desc": "高性能 AI 原生编辑器，Rust 编写，内置 AI 面板与内联补全。",
+   "modelMode": "BYOK + 内置",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "claude-4.6",
+    "gpt-5.2"
+   ],
+   "highlight": "极速启动的 AI 编辑器",
+   "liveVendors": [
+    "anthropic",
+    "openai",
+    "google"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "replit-agent",
+   "name": "Replit Agent",
+   "vendor": "Replit",
+   "type": "云端全栈 Agent",
+   "platform": "Web",
+   "desc": "云端 IDE 内置 Agent，从自然语言生成完整应用并一键部署，含数据库/域名。",
+   "modelMode": "订阅内置",
+   "modelSelect": "自动路由",
+   "builtinModels": [
+    "claude-4.6",
+    "gpt-5.2"
+   ],
+   "highlight": "云端一键建站 Agent",
+   "liveVendors": [
+    "anthropic",
+    "openai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "lovable",
+   "name": "Lovable",
+   "vendor": "Lovable",
+   "type": "前端生成 Agent",
+   "platform": "Web",
+   "desc": "自然语言生成完整前端应用（React/Vite），内置 AI 编辑器，一键部署。",
+   "modelMode": "订阅内置",
+   "modelSelect": "自动路由",
+   "builtinModels": [
+    "claude-4.6",
+    "gpt-5.2"
+   ],
+   "highlight": "前端 UI 生成最快路径",
+   "liveVendors": [
+    "anthropic",
+    "openai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "v0",
+   "name": "v0 by Vercel",
+   "vendor": "Vercel",
+   "type": "前端生成 Agent",
+   "platform": "Web",
+   "desc": "Vercel 出品，自然语言生成 React/Next.js 组件与页面，深度 Vercel 部署集成。",
+   "modelMode": "订阅内置",
+   "modelSelect": "自动路由",
+   "builtinModels": [
+    "claude-4.6",
+    "gpt-5.2"
+   ],
+   "highlight": "Next.js 生态首选",
+   "liveVendors": [
+    "anthropic",
+    "openai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "devin",
+   "name": "Devin",
+   "vendor": "Cognition",
+   "type": "全自主软件工程师",
+   "platform": "Web/Cloud",
+   "desc": "全自主 AI 软件工程师，云端沙箱独立完成需求→代码→测试→部署全流程。",
+   "modelMode": "订阅内置",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "gpt-5.2",
+    "claude-4.6"
+   ],
+   "highlight": "真正的全自主编程 Agent",
+   "liveVendors": [
+    "openai",
+    "anthropic"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "marscode",
+   "name": "MarsCode",
+   "vendor": "字节跳动",
+   "type": "AI 编程助手",
+   "platform": "IDE 插件/Web",
+   "desc": "字节出品，豆包驱动，支持代码补全/问答/Agent，深度集成字节云 IDE。",
+   "modelMode": "内置豆包 + BYOK",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "doubao-3",
+    "seed-code"
+   ],
+   "highlight": "字节生态编程助手",
+   "liveVendors": [
+    "bytedance-seed",
+    "doubao"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "codebuddy",
+   "name": "CodeBuddy",
+   "vendor": "腾讯",
+   "type": "AI 编程助手",
+   "platform": "IDE 插件/Web",
+   "desc": "腾讯云代码助手，混元驱动，支持代码补全/问答/Agent，与 WorkBuddy 同源。",
+   "modelMode": "内置混元 + BYOK",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "hy3",
+    "deepseek-v4"
+   ],
+   "highlight": "腾讯生态编程助手",
+   "liveVendors": [
+    "tencent",
+    "hunyuan"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "lingma",
+   "name": "通义灵码",
+   "vendor": "阿里",
+   "type": "AI 编程助手",
+   "platform": "IDE 插件",
+   "desc": "阿里通义实验室出品，Qwen 驱动，代码补全/问答/智能体，覆盖主流 IDE。",
+   "modelMode": "内置 Qwen",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "qwen-3.8-max",
+    "qwen-3.5"
+   ],
+   "highlight": "国内装机量最大的编程助手",
+   "liveVendors": [
+    "qwen",
+    "alibaba"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "comate",
+   "name": "文心快码 Comate",
+   "vendor": "百度",
+   "type": "AI 编程助手",
+   "platform": "IDE 插件",
+   "desc": "百度出品，文心驱动，代码补全/解释/测试生成，深度百度智能云集成。",
+   "modelMode": "内置文心",
+   "modelSelect": "手动选择",
+   "builtinModels": [
+    "ernie-5"
+   ],
+   "highlight": "百度生态编程助手",
+   "liveVendors": [
+    "baidu"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "编程工具"
+  },
+  {
+   "id": "dingtalk-ai",
+   "name": "钉钉 AI",
+   "vendor": "阿里巴巴",
+   "type": "办公 AI 助理",
+   "platform": "钉钉内",
+   "desc": "钉钉内置 AI 助理（钉钉 AI 助理/魔法棒），支持会议纪要、文档生成、流程自动化。",
+   "modelMode": "内置通义",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "qwen-3.8-max"
+   ],
+   "highlight": "国内企业办公场景普及度最高",
+   "liveVendors": [
+    "qwen",
+    "alibaba"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "办公工作台"
+  },
+  {
+   "id": "feishu-ai",
+   "name": "飞书智能伙伴",
+   "vendor": "字节跳动",
+   "type": "办公 AI 助理",
+   "platform": "飞书内",
+   "desc": "飞书内置 AI（飞书智能伙伴/My AI），会议纪要、多维表格、文档协作深度集成。",
+   "modelMode": "内置豆包 + 多模型",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "doubao-3",
+    "seed-2.1-turbo"
+   ],
+   "highlight": "字节办公生态 AI 中枢",
+   "liveVendors": [
+    "bytedance-seed",
+    "doubao"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "办公工作台"
+  },
+  {
+   "id": "wps-ai",
+   "name": "WPS AI",
+   "vendor": "金山办公",
+   "type": "办公 AI",
+   "platform": "WPS 全家桶",
+   "desc": "WPS 内置 AI，文档/表格/演示/PDF 深度集成，中文办公场景优化。",
+   "modelMode": "内置多模型",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "qwen-3.8-max",
+    "glm-5.2"
+   ],
+   "highlight": "国内办公软件覆盖率最高",
+   "liveVendors": [
+    "qwen",
+    "z-ai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "办公工作台"
+  },
+  {
+   "id": "ima",
+   "name": "ima.copilot",
+   "vendor": "腾讯",
+   "type": "知识库 AI",
+   "platform": "Web/桌面",
+   "desc": "腾讯智能工作台，知识库问答、搜索增强，与微信/企微深度打通。",
+   "modelMode": "内置混元",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "hy3"
+   ],
+   "highlight": "腾讯知识库入口",
+   "liveVendors": [
+    "tencent",
+    "hunyuan"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "办公工作台"
+  },
+  {
+   "id": "yuanbao",
+   "name": "腾讯元宝",
+   "vendor": "腾讯",
+   "type": "通用 AI 助手",
+   "platform": "Web/App",
+   "desc": "腾讯 C 端 AI 助手，混元驱动，支持联网搜索、文档解析、图像理解。",
+   "modelMode": "内置混元",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "hy3"
+   ],
+   "highlight": "腾讯 C 端 AI 入口",
+   "liveVendors": [
+    "tencent",
+    "hunyuan"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "doubao",
+   "name": "豆包",
+   "vendor": "字节跳动",
+   "type": "通用 AI 助手",
+   "platform": "Web/App",
+   "desc": "字节 C 端 AI 助手，国内 MAU 领先，支持对话/创作/图像/语音全模态。",
+   "modelMode": "内置豆包",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "doubao-3"
+   ],
+   "highlight": "国内用户量最大的 AI 助手",
+   "liveVendors": [
+    "bytedance-seed",
+    "doubao"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "kimi-app",
+   "name": "Kimi",
+   "vendor": "月之暗面",
+   "type": "通用 AI 助手",
+   "platform": "Web/App",
+   "desc": "Kimi 助手，长上下文推理与文件处理见长，科研/办公场景口碑好。",
+   "modelMode": "内置 Kimi",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "kimi-k3"
+   ],
+   "highlight": "长文本处理体验标杆",
+   "liveVendors": [
+    "moonshotai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "wenxiaoyan",
+   "name": "文小言",
+   "vendor": "百度",
+   "type": "通用 AI 助手",
+   "platform": "Web/App",
+   "desc": "百度 C 端 AI 助手，文心驱动，搜索生态与多模态创作。",
+   "modelMode": "内置文心",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "ernie-5"
+   ],
+   "highlight": "百度 AI 入口",
+   "liveVendors": [
+    "baidu"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "notion-ai",
+   "name": "Notion AI",
+   "vendor": "Notion",
+   "type": "知识库 AI",
+   "platform": "Web/App",
+   "desc": "Notion 内置 AI，文档写作、知识库问答、数据库自动化，海外团队标配。",
+   "modelMode": "内置多模型",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "claude-4.6",
+    "gpt-5.2"
+   ],
+   "highlight": "海外知识库 AI 标杆",
+   "liveVendors": [
+    "anthropic",
+    "openai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "办公工作台"
+  },
+  {
+   "id": "chatgpt",
+   "name": "ChatGPT",
+   "vendor": "OpenAI",
+   "type": "通用 AI 助手",
+   "platform": "Web/App/桌面",
+   "desc": "OpenAI 旗舰助手，GPT 驱动，插件生态丰富，可调用代码解释器/联网/图像生成。",
+   "modelMode": "内置 GPT",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "gpt-5.2"
+   ],
+   "highlight": "全球 AI 助手标杆",
+   "liveVendors": [
+    "openai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "claude-app",
+   "name": "Claude",
+   "vendor": "Anthropic",
+   "type": "通用 AI 助手",
+   "platform": "Web/App/桌面",
+   "desc": "Anthropic 旗舰助手，长上下文与写作质量见长，Artifacts 交互式输出。",
+   "modelMode": "内置 Claude",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "claude-4.6"
+   ],
+   "highlight": "写作与长文档标杆",
+   "liveVendors": [
+    "anthropic"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "gemini-app",
+   "name": "Gemini",
+   "vendor": "Google",
+   "type": "通用 AI 助手",
+   "platform": "Web/App",
+   "desc": "Google 旗舰助手，多模态最强，深度集成 Google 搜索与 Workspace。",
+   "modelMode": "内置 Gemini",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "gemini-3-pro"
+   ],
+   "highlight": "多模态 + 搜索生态标杆",
+   "liveVendors": [
+    "google"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "perplexity",
+   "name": "Perplexity",
+   "vendor": "Perplexity AI",
+   "type": "AI 搜索引擎",
+   "platform": "Web/App",
+   "desc": "AI 搜索引擎，实时检索 + 答案生成 + 引用溯源，研究场景利器。",
+   "modelMode": "内置多模型",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "gpt-5.2",
+    "claude-4.6"
+   ],
+   "highlight": "AI 搜索品类开创者",
+   "liveVendors": [
+    "openai",
+    "anthropic"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "manus",
+   "name": "Manus",
+   "vendor": "Manus AI",
+   "type": "通用自主 Agent",
+   "platform": "Web/Cloud",
+   "desc": "通用自主 Agent，云端沙箱执行复杂任务（调研/数据处理/建站），2026 现象级产品。",
+   "modelMode": "内置多模型",
+   "modelSelect": "自动",
+   "builtinModels": [
+    "claude-4.6",
+    "gpt-5.2"
+   ],
+   "highlight": "通用 Agent 现象级产品",
+   "liveVendors": [
+    "anthropic",
+    "openai"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "AI 助手"
+  },
+  {
+   "id": "autogen",
+   "name": "AutoGen",
+   "vendor": "Microsoft",
+   "type": "开源多智能体框架",
+   "platform": "Python 库",
+   "desc": "微软开源多智能体框架，可编排多个 Agent 协作完成任务，企业级成熟。",
+   "modelMode": "BYOK",
+   "modelSelect": "代码配置",
+   "builtinModels": [
+    "gpt-5.2",
+    "claude-4.6"
+   ],
+   "highlight": "多智能体编排事实标准",
+   "liveVendors": [
+    "openai",
+    "anthropic"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "Agent 框架"
+  },
+  {
+   "id": "crewai",
+   "name": "CrewAI",
+   "vendor": "CrewAI",
+   "type": "开源多智能体框架",
+   "platform": "Python 库",
+   "desc": "轻量多智能体框架，Role/Task/Process 三要素，上手快。",
+   "modelMode": "BYOK",
+   "modelSelect": "代码配置",
+   "builtinModels": [
+    "gpt-5.2",
+    "deepseek-v4"
+   ],
+   "highlight": "社区最火的多 Agent 框架",
+   "liveVendors": [
+    "openai",
+    "deepseek"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "Agent 框架"
+  },
+  {
+   "id": "langchain",
+   "name": "LangChain",
+   "vendor": "LangChain",
+   "type": "开源 LLM 框架",
+   "platform": "Python/JS 库",
+   "desc": "LLM 应用开发框架，LangGraph 提供 Agent 编排，生态最全。",
+   "modelMode": "BYOK",
+   "modelSelect": "代码配置",
+   "builtinModels": [
+    "gpt-5.2",
+    "claude-4.6",
+    "deepseek-v4"
+   ],
+   "highlight": "LLM 应用开发生态之王",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "deepseek"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "Agent 框架"
+  },
+  {
+   "id": "dify",
+   "name": "Dify",
+   "vendor": "LangGenius",
+   "type": "开源 Agent 平台",
+   "platform": "自部署/云",
+   "desc": "开源 LLM App 平台，可视化工作流编排 Agent，支持多模型，企业自托管首选。",
+   "modelMode": "BYOK + 内置",
+   "modelSelect": "可视化配置",
+   "builtinModels": [
+    "deepseek-v4",
+    "qwen-3.5",
+    "glm-5.2"
+   ],
+   "highlight": "开源 Agent 平台装机量第一",
+   "liveVendors": [
+    "openai",
+    "anthropic",
+    "deepseek",
+    "qwen"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "Agent 框架"
+  },
+  {
+   "id": "flowise",
+   "name": "Flowise",
+   "vendor": "Flowise",
+   "type": "开源可视化 Agent",
+   "platform": "自部署",
+   "desc": "开源拖拽式 LLM 工作流，低代码搭建 Agent 应用。",
+   "modelMode": "BYOK",
+   "modelSelect": "可视化配置",
+   "builtinModels": [
+    "deepseek-v4",
+    "gpt-5.2"
+   ],
+   "highlight": "低代码 Agent 搭建",
+   "liveVendors": [
+    "openai",
+    "deepseek"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "Agent 框架"
+  },
+  {
+   "id": "n8n",
+   "name": "n8n",
+   "vendor": "n8n",
+   "type": "开源自动化工作流",
+   "platform": "自部署/云",
+   "desc": "开源工作流自动化，AI Agent 节点 + 400+ 集成，运维/运营场景。",
+   "modelMode": "BYOK",
+   "modelSelect": "可视化配置",
+   "builtinModels": [
+    "gpt-5.2",
+    "deepseek-v4"
+   ],
+   "highlight": "AI 自动化工作流标配",
+   "liveVendors": [
+    "openai",
+    "anthropic"
+   ],
+   "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
+   "category": "Agent 框架"
   }
  ]
 }</script>
@@ -2126,11 +2872,16 @@ function toolEcoHTML(t){
 }
 
 /* ===== 工具视图 ===== */
+let toolCat = '';  // 工具分类筛选（''=全部）
 function renderTools(){
   const wrap = document.getElementById('main');
-  const cards = TOOLS.map((t, i) => {
+  // 分类 tab
+  const cats = ['', '编程工具', '办公工作台', 'AI 助手', 'Agent 框架'];
+  const tabs = cats.map(c => `<button class="cat-tab ${toolCat===c?'on':''}" onclick="setToolCat('${c}')">${c===''?'🌐 全部':c}</button>`).join('');
+  const list = toolCat ? TOOLS.filter(t => t.category === toolCat) : TOOLS;
+  const cards = list.map((t, i) => {
     const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
-    return `<div class="toolcard rise" style="animation-delay:${Math.min(i*60,400)}ms" data-mid="tool-${t.id}" data-tip-key="tool:${t.id}">
+    return `<div class="toolcard rise" style="animation-delay:${Math.min(i*40,400)}ms" data-mid="tool-${t.id}" data-tip-key="tool:${t.id}">
       <div class="tc-top">
         <div>
           <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
@@ -2147,8 +2898,15 @@ function renderTools(){
       <div class="t-src">来源：${esc(t.source)}</div>
     </div>`;
   }).join('');
-  wrap.innerHTML = `<div class="view-enter"><div class="toolgrid">${cards}</div></div>`;
+  wrap.innerHTML = `<div class="view-enter">
+    <div class="cat-tabs">${tabs}<span class="cat-count">共 ${list.length} 款</span></div>
+    <div class="toolgrid">${cards}</div>
+  </div>`;
   initCardFX();
+}
+function setToolCat(c){
+  toolCat = c;
+  renderTools();
 }
 
 /* ===== 实时动态（OpenRouter API）===== */

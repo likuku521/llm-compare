@@ -347,11 +347,16 @@ function toolEcoHTML(t){
 }
 
 /* ===== 工具视图 ===== */
+let toolCat = '';  // 工具分类筛选（''=全部）
 function renderTools(){
   const wrap = document.getElementById('main');
-  const cards = TOOLS.map((t, i) => {
+  // 分类 tab
+  const cats = ['', '编程工具', '办公工作台', 'AI 助手', 'Agent 框架'];
+  const tabs = cats.map(c => `<button class="cat-tab ${toolCat===c?'on':''}" onclick="setToolCat('${c}')">${c===''?'🌐 全部':c}</button>`).join('');
+  const list = toolCat ? TOOLS.filter(t => t.category === toolCat) : TOOLS;
+  const cards = list.map((t, i) => {
     const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
-    return `<div class="toolcard rise" style="animation-delay:${Math.min(i*60,400)}ms" data-mid="tool-${t.id}" data-tip-key="tool:${t.id}">
+    return `<div class="toolcard rise" style="animation-delay:${Math.min(i*40,400)}ms" data-mid="tool-${t.id}" data-tip-key="tool:${t.id}">
       <div class="tc-top">
         <div>
           <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
@@ -368,8 +373,15 @@ function renderTools(){
       <div class="t-src">来源：${esc(t.source)}</div>
     </div>`;
   }).join('');
-  wrap.innerHTML = `<div class="view-enter"><div class="toolgrid">${cards}</div></div>`;
+  wrap.innerHTML = `<div class="view-enter">
+    <div class="cat-tabs">${tabs}<span class="cat-count">共 ${list.length} 款</span></div>
+    <div class="toolgrid">${cards}</div>
+  </div>`;
   initCardFX();
+}
+function setToolCat(c){
+  toolCat = c;
+  renderTools();
 }
 
 /* ===== 实时动态（OpenRouter API）===== */

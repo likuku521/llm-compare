@@ -312,6 +312,11 @@ html[data-theme="light"] .viewmode{background:rgba(24,33,54,.05);border-color:rg
 @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
 /* ===== 工具视图 ===== */
+.cat-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.cat-tab{padding:7px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer;font-size:12.5px;font-weight:600;transition:all .2s;backdrop-filter:blur(8px)}
+.cat-tab:hover{color:var(--ink);border-color:var(--line-strong)}
+.cat-tab.on{background:linear-gradient(135deg,rgba(245,201,107,.9),rgba(232,155,60,.88));color:#0A0E1A;font-weight:800;border-color:transparent;box-shadow:0 4px 18px rgba(245,201,107,.3)}
+.cat-count{font-size:11.5px;color:var(--dim);margin-left:auto}
 .toolgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:16px;perspective:1200px}
 .toolcard{background:var(--glass);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;transition:all .28s;backdrop-filter:blur(14px);position:relative;overflow:hidden;transform-style:preserve-3d}
 .toolcard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .3s;

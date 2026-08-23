@@ -949,5 +949,33 @@
     ],
     "source": "awesome-ai-tools 汇总 + 领域调研（2026-08）",
     "category": "Agent 框架"
+  },
+  {
+    "id": "hermes",
+    "name": "Hermes Agent",
+    "vendor": "Nous Research",
+    "type": "通用 AI Agent 平台",
+    "platform": "桌面 (Windows/macOS/Linux) + CLI",
+    "desc": "Nous Research 出品的 AI Agent 平台。支持技能（Skills）体系、多子代理并行委派、浏览器/终端自动化、定时任务（cron）、持久记忆与经验沉淀，可自主完成从需求到交付的完整工作流，是「AI 时代工具构建者」的核心生产工具。",
+    "modelMode": "多模型接入（内置 + BYOK）+ Provider 可配置",
+    "modelSelect": "按任务切换（当前示例：DeepSeek-V4-Flash）",
+    "builtinModels": [
+      "deepseek-v4-flash",
+      "claude-4.6",
+      "gpt-5.2",
+      "qwen-3.8-max"
+    ],
+    "highlight": "技能沉淀体系（Skills）+ 子代理并行委派 + 持久记忆，复杂任务可复用可交付",
+    "liveVendors": [
+      "deepseek",
+      "openai",
+      "anthropic",
+      "qwen",
+      "z-ai",
+      "moonshotai",
+      "google"
+    ],
+    "category": "AI 助手",
+    "source": "Nous Research 官方（2026-08）"
   }
 ]

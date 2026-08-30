@@ -243,6 +243,7 @@ main{max-width:1280px;margin:18px auto 56px;padding:0 24px;min-height:40vh}
 .mcard .mc-name{font-weight:800;font-size:15px;line-height:1.3;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .mcard .mc-name .flag{font-size:13px}
 .mcard .mc-vendor{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mcard .mc-dot{opacity:.5;font-size:10px}
 .mcard .mc-price{color:var(--gold2);font-weight:700;background:rgba(245,201,107,.1);border:1px solid rgba(245,201,107,.25);border-radius:6px;padding:0 6px;font-variant-numeric:tabular-nums}
 .mcard .mc-best{font-size:12.5px;color:#B9C2D8;line-height:1.6;margin:10px 0 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .mcard .mc-ctx{margin:12px 0 4px}
@@ -434,10 +435,10 @@ footer .src p{margin:3px 0;line-height:1.8}
 <!-- ===== Hero ===== -->
 <section class="hero">
   <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
-  <div class="hero-badge"><span class="pulse-dot"></span>LLM 选型智库 · 实时数据</div>
+  <div class="hero-badge"><span class="pulse-dot"></span>实时数据 · 多维对比</div>
   <h1>大模型多维对比总览</h1>
-  <p class="sub">一句话描述任务，自动推荐匹配模型 —— <b>性能 · 上下文 · 多模态 · 场景 · Agent 工具</b> 一眼分辨</p>
-  <div class="hero-updated">数据更新：<span class="dot">2026-08-11</span> · 实时动态：OpenRouter API · 点卡片查看详情 <span class="fx-badge" id="fxBadge"></span></div>
+  <p class="sub">描述任务，即得最优模型</p>
+  <div class="hero-updated"><span class="dot">2026-08-11</span> · OpenRouter 实时 <span class="fx-badge" id="fxBadge"></span></div>
 </section>
 
 <!-- ===== 统计区 ===== -->
@@ -456,7 +457,7 @@ footer .src p{margin:3px 0;line-height:1.8}
     </div>
   </div>
   <div class="tb-row2">
-    <input class="searchbox" id="searchBox" placeholder="🔍 试试：做PPT / 写代码 / 分析数据 / 翻译 / 长文档 / 图片…（智能推荐匹配模型）">
+    <input class="searchbox" id="searchBox" placeholder="🔍 搜索或描述任务，如「做PPT」…">
     <div class="fgroup" id="gradeFilter"></div>
     <div class="fgroup" id="vendorFilter"></div>
     <div class="fgroup" id="mmFilter"></div>
@@ -472,10 +473,8 @@ footer .src p{margin:3px 0;line-height:1.8}
 
 <footer>
   <div class="src">
-    <h5>📌 数据说明</h5>
-    <p>· 本地精选档案截至 2026-08-11（官方文档 + 实测评价）；🛰️ 实时动态来自 OpenRouter 公开 API。</p>
-    <p>· 等级分级为综合参考（能力/速度/生态），非官方评分；上下文、多模态、费用以官方最新为准。</p>
-    <p>· 模型能力更新快，若与官方有出入请以厂商为准。</p>
+    <h5>数据说明</h5>
+    <p>数据截至 2026-08-11 · 实时数据源自 OpenRouter / 汇率 API · 以官方最新为准</p>
   </div>
 </footer>
 
@@ -2795,10 +2794,8 @@ function recoBanner(){
     </span>`;
   }).join('');
   return `<div class="reco">
-    <div class="reco-head">🎯 智能推荐：<b>${esc(task.label)}</b></div>
-    <div class="reco-reason">${esc(task.reason)}</div>
+    <div class="reco-head">🎯 <b>${esc(task.label)}</b><span class="reco-reason">${esc(task.reason)}</span></div>
     <div class="reco-chips">${chips}</div>
-    <div class="reco-tip">↓ 下方为按任务匹配度排序的前 8 个模型</div>
   </div>`;
 }
 
@@ -2812,7 +2809,7 @@ function renderCards(list){
         <div class="mc-grade" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
         <div>
           <div class="mc-name">${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
-          <div class="mc-vendor">${esc(m.vendorCn || m.vendor)} · ${fmtCtx(m.contextVal)} · <span class="mc-price">💱 ${costDisplay(m)}</span>${m.thinking?' · 🧠思考':''}</div>
+          <div class="mc-vendor">${esc(m.vendorCn || m.vendor)}<span class="mc-dot">·</span><span class="mc-price">${costDisplay(m)}</span></div>
         </div>
         <div class="mc-radar" title="六维能力分析">${radarSvg(radarData(m).vals, gradeColor(m.grade), 76)}</div>
       </div>
@@ -2894,9 +2891,9 @@ function toolEcoHTML(t){
   const s = toolEcoStats(t);
   if(!s) return '';
   const live = LIVE_LOADED ? `<span class="eco-live">LIVE</span>` : '';
-  const recent = s.recent7 > 0 ? `<b class="eco-hot">+${s.recent7}</b> 近7天` : `<b>0</b> 近7天`;
-  const newest = s.newestName ? `最新 <b>${esc(s.newestName)}</b>${s.newestDays!==null?`（${s.newestDays}天前）`:''}` : '';
-  return `<div class="t-eco">📡 生态模型 ${s.count} 个 · ${recent}${newest?` · ${newest}`:''}${live}</div>`;
+  const recent = s.recent7 > 0 ? `<b class="eco-hot">+${s.recent7}</b> 7天` : `<b>0</b> 7天`;
+  const newest = s.newestName ? `最新 <b>${esc(s.newestName)}</b>` : '';
+  return `<div class="t-eco">📡 ${s.count}${newest?` · ${newest}`:''}${recent?` · ${recent}`:''}${live}</div>`;
 }
 
 /* ===== 工具视图 ===== */
@@ -2919,11 +2916,8 @@ function renderTools(){
       </div>
       ${toolEcoHTML(t)}
       <div class="t-desc">${esc(t.desc)}</div>
-      <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
-      <div class="t-mode">模型选择：<b>${esc(t.modelSelect)}</b></div>
       <div class="t-models">${models.map(m => `<span class="tm" onclick="openModal('${m.id}')" title="点击查看模型详情">${esc(m.name)}</span>`).join('')}</div>
       <div class="t-hl">⭐ ${esc(t.highlight)}</div>
-      <div class="t-src">来源：${esc(t.source)}</div>
     </div>`;
   }).join('');
   wrap.innerHTML = `<div class="view-enter">
@@ -3028,13 +3022,13 @@ function renderLive(){
   wrap.innerHTML = `<div class="view-enter">
     <div class="live-head">
       <span class="live-dot"></span>
-      <b>实时模型动态</b>
-      <span class="live-src">OpenRouter API 实时拉取 · ${LIVE.length} 个模型 · ${new Date().toLocaleString('zh-CN',{hour12:false})}</span>
+      <b>实时动态</b>
+      <span class="live-src">OpenRouter · ${LIVE.length} 个模型 · ${new Date().toLocaleString('zh-CN',{hour12:false})}</span>
     </div>
-    ${liveSection('🆕 最新上线', newest, 'created')}
-    ${liveSection('🚀 超长上下文 (1M+)', bigCtx, 'ctx')}
-    ${liveSection('💰 低价精选 (≥128K 上下文)', cheap, 'price')}
-    <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 ¥/1M tokens（实时汇率 ${FX.toFixed(3)} 折算，见页首）。</div>
+    ${liveSection('🆕 最新', newest, 'created')}
+    ${liveSection('🚀 1M+ 上下文', bigCtx, 'ctx')}
+    ${liveSection('💰 低价', cheap, 'price')}
+    <div class="live-note">⚡ OpenRouter 实时数据 · 价格 ¥/1M tokens（汇率 ${FX.toFixed(3)}）· <b class="new-tag">NEW</b> 未收录 / <b class="have-tag">✓</b> 已有档案</div>
   </div>`;
 }
 
@@ -3079,12 +3073,12 @@ function openLive(id){
       <div class="m-item"><div class="k">输出价格</div><div class="v">${fmtPricePerM(m.pricing?.completion)}/1M</div></div>
       <div class="m-item"><div class="k">知识截止</div><div class="v">${m.knowledge_cutoff || '—'}</div></div>
     </div>
-    <div class="m-sec"><h4>🔧 输入模态</h4><div class="m-row"><span class="tag">${liveModality(mods) || '文本'}</span>${m.reasoning?.supported_efforts ? '<span class="tag think">🧠 支持推理模式</span>' : ''}</div></div>
-    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(m), RADAR_LIVE_COLOR, 170)}</div></div>
-    <div class="m-sec"><h4>📅 上线时间</h4><p>${m.created ? new Date(m.created*1000).toLocaleString('zh-CN') : '未知'}</p></div>
-    ${m.description ? `<div class="m-sec"><h4>📝 官方描述</h4><p>${esc(m.description.slice(0,300))}</p></div>` : ''}
-    ${local ? `<div class="m-sec"><h4>🔗 本站档案</h4><p>此模型已有本地实测档案，<a href="#" onclick="closeModal();openModal('${local.id}');return false;">点击查看</a>（等级/场景/Agent工具）</p></div>` : ''}
-    <div class="m-sec"><h4>🔗 来源</h4><p>OpenRouter API：<a href="https://openrouter.ai/${esc(m.id)}" target="_blank">https://openrouter.ai/${esc(m.id)}</a></p></div>`;
+    <div class="m-sec"><h4>输入模态</h4><div class="m-row"><span class="tag">${liveModality(mods) || '文本'}</span>${m.reasoning?.supported_efforts ? '<span class="tag think">🧠 推理</span>' : ''}</div></div>
+    <div class="m-sec"><h4>六维能力</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(m), RADAR_LIVE_COLOR, 170)}</div></div>
+    <div class="m-sec"><h4>上线</h4><p>${m.created ? new Date(m.created*1000).toLocaleString('zh-CN') : '未知'}</p></div>
+    ${m.description ? `<div class="m-sec"><h4>描述</h4><p>${esc(m.description.slice(0,300))}</p></div>` : ''}
+    ${local ? `<div class="m-sec"><h4>本地档案</h4><p><a href="#" onclick="closeModal();openModal('${local.id}');return false;">查看本地档案</a></p></div>` : ''}
+    <div class="m-sec"><h4>来源</h4><p><a href="https://openrouter.ai/${esc(m.id)}" target="_blank">OpenRouter</a></p></div>`;
   document.getElementById('modalMask').classList.add('show');
 }
 
@@ -3115,12 +3109,12 @@ function openModal(id){
       <div class="m-item"><div class="k">多模态输入</div><div class="v">${m.multimodal.join(' / ')}</div></div>
       <div class="m-item"><div class="k">费用水平</div><div class="v">${m.cost}</div></div>
     </div>
-    <div class="m-sec"><h4>💡 一句话选型</h4><p>${esc(m.bestFor)}</p></div>
-    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(radarData(m), gradeColor(m.grade), 170)}</div></div>
-    <div class="m-sec"><h4>🎯 适用场景</h4><div class="m-row">${m.scenes.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div></div>
-    <div class="m-sec"><h4>🏆 擅长领域</h4><div class="m-row">${m.strengths.map(s=>`<span class="tag think">${esc(s)}</span>`).join('')}</div></div>
-    <div class="m-sec"><h4>🧩 内置此模型的 Agent 工具</h4><div class="m-row">${toolStr}</div></div>
-    <div class="m-sec"><h4>📝 备注</h4><p>${esc(m.notes)}</p></div>`;
+    <div class="m-sec"><h4>选型</h4><p>${esc(m.bestFor)}</p></div>
+    <div class="m-sec"><h4>六维能力</h4><div class="m-row" style="align-items:flex-start">${radarBlock(radarData(m), gradeColor(m.grade), 170)}</div></div>
+    <div class="m-sec"><h4>场景</h4><div class="m-row">${m.scenes.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div></div>
+    <div class="m-sec"><h4>擅长</h4><div class="m-row">${m.strengths.map(s=>`<span class="tag think">${esc(s)}</span>`).join('')}</div></div>
+    <div class="m-sec"><h4>Agent 工具</h4><div class="m-row">${toolStr}</div></div>
+    <div class="m-sec"><h4>备注</h4><p>${esc(m.notes)}</p></div>`;
   document.getElementById('modalMask').classList.add('show');
 }
 function closeModal(){ document.getElementById('modalMask').classList.remove('show'); }
@@ -3217,25 +3211,24 @@ function renderStats(){
 
   document.getElementById('hdStats').innerHTML = `
     <div class="stat rise">
-      <div class="stat-title">📦 模型库总览</div>
+      <div class="stat-title">模型库</div>
       <div class="stat-hero">
         <div class="hero-num" data-count="${total}">0</div>
         <div class="hero-sub">
-          <div class="sub-item">Agent 工具 <b data-count2="${TOOLS.length}">0</b></div>
-          <div class="sub-item">1M 上下文 <b style="color:var(--gold)">${oneMN}</b> 款</div>
+          <div class="sub-item">工具 <b data-count2="${TOOLS.length}">0</b> · 1M+ <b style="color:var(--gold)">${oneMN}</b></div>
         </div>
       </div>
     </div>
     <div class="stat rise" style="animation-delay:80ms">
-      <div class="stat-title">🏅 等级分布</div>
+      <div class="stat-title">等级</div>
       ${donut(gradeSegs, total, '模型')}
     </div>
     <div class="stat rise" style="animation-delay:160ms">
-      <div class="stat-title">🧠 能力分布</div>
-      ${donut(capSegs, thinkN, '思考模式')}
+      <div class="stat-title">能力</div>
+      ${donut(capSegs, thinkN, '思考')}
     </div>
     <div class="stat rise" style="animation-delay:240ms">
-      <div class="stat-title">📏 上下文规模</div>
+      <div class="stat-title">上下文</div>
       <div class="barstack">
         <div class="bs-track">${ctxBars}</div>
         ${ctxRows}

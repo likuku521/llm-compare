@@ -242,10 +242,8 @@ function recoBanner(){
     </span>`;
   }).join('');
   return `<div class="reco">
-    <div class="reco-head">🎯 智能推荐：<b>${esc(task.label)}</b></div>
-    <div class="reco-reason">${esc(task.reason)}</div>
+    <div class="reco-head">🎯 <b>${esc(task.label)}</b><span class="reco-reason">${esc(task.reason)}</span></div>
     <div class="reco-chips">${chips}</div>
-    <div class="reco-tip">↓ 下方为按任务匹配度排序的前 8 个模型</div>
   </div>`;
 }
 
@@ -259,7 +257,7 @@ function renderCards(list){
         <div class="mc-grade" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
         <div>
           <div class="mc-name">${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
-          <div class="mc-vendor">${esc(m.vendorCn || m.vendor)} · ${fmtCtx(m.contextVal)} · <span class="mc-price">💱 ${costDisplay(m)}</span>${m.thinking?' · 🧠思考':''}</div>
+          <div class="mc-vendor">${esc(m.vendorCn || m.vendor)}<span class="mc-dot">·</span><span class="mc-price">${costDisplay(m)}</span></div>
         </div>
         <div class="mc-radar" title="六维能力分析">${radarSvg(radarData(m).vals, gradeColor(m.grade), 76)}</div>
       </div>
@@ -341,9 +339,9 @@ function toolEcoHTML(t){
   const s = toolEcoStats(t);
   if(!s) return '';
   const live = LIVE_LOADED ? `<span class="eco-live">LIVE</span>` : '';
-  const recent = s.recent7 > 0 ? `<b class="eco-hot">+${s.recent7}</b> 近7天` : `<b>0</b> 近7天`;
-  const newest = s.newestName ? `最新 <b>${esc(s.newestName)}</b>${s.newestDays!==null?`（${s.newestDays}天前）`:''}` : '';
-  return `<div class="t-eco">📡 生态模型 ${s.count} 个 · ${recent}${newest?` · ${newest}`:''}${live}</div>`;
+  const recent = s.recent7 > 0 ? `<b class="eco-hot">+${s.recent7}</b> 7天` : `<b>0</b> 7天`;
+  const newest = s.newestName ? `最新 <b>${esc(s.newestName)}</b>` : '';
+  return `<div class="t-eco">📡 ${s.count}${newest?` · ${newest}`:''}${recent?` · ${recent}`:''}${live}</div>`;
 }
 
 /* ===== 工具视图 ===== */
@@ -366,11 +364,8 @@ function renderTools(){
       </div>
       ${toolEcoHTML(t)}
       <div class="t-desc">${esc(t.desc)}</div>
-      <div class="t-mode">模型模式：<b>${esc(t.modelMode)}</b></div>
-      <div class="t-mode">模型选择：<b>${esc(t.modelSelect)}</b></div>
       <div class="t-models">${models.map(m => `<span class="tm" onclick="openModal('${m.id}')" title="点击查看模型详情">${esc(m.name)}</span>`).join('')}</div>
       <div class="t-hl">⭐ ${esc(t.highlight)}</div>
-      <div class="t-src">来源：${esc(t.source)}</div>
     </div>`;
   }).join('');
   wrap.innerHTML = `<div class="view-enter">
@@ -475,13 +470,13 @@ function renderLive(){
   wrap.innerHTML = `<div class="view-enter">
     <div class="live-head">
       <span class="live-dot"></span>
-      <b>实时模型动态</b>
-      <span class="live-src">OpenRouter API 实时拉取 · ${LIVE.length} 个模型 · ${new Date().toLocaleString('zh-CN',{hour12:false})}</span>
+      <b>实时动态</b>
+      <span class="live-src">OpenRouter · ${LIVE.length} 个模型 · ${new Date().toLocaleString('zh-CN',{hour12:false})}</span>
     </div>
-    ${liveSection('🆕 最新上线', newest, 'created')}
-    ${liveSection('🚀 超长上下文 (1M+)', bigCtx, 'ctx')}
-    ${liveSection('💰 低价精选 (≥128K 上下文)', cheap, 'price')}
-    <div class="live-note">⚡ 数据来自 OpenRouter 公开 API，实时反映各厂商最新上架模型；标 <b class="new-tag">NEW</b> 为本站未收录新模型，<b class="have-tag">✓</b> 为本地已有档案。价格 = 输入 ¥/1M tokens（实时汇率 ${FX.toFixed(3)} 折算，见页首）。</div>
+    ${liveSection('🆕 最新', newest, 'created')}
+    ${liveSection('🚀 1M+ 上下文', bigCtx, 'ctx')}
+    ${liveSection('💰 低价', cheap, 'price')}
+    <div class="live-note">⚡ OpenRouter 实时数据 · 价格 ¥/1M tokens（汇率 ${FX.toFixed(3)}）· <b class="new-tag">NEW</b> 未收录 / <b class="have-tag">✓</b> 已有档案</div>
   </div>`;
 }
 
@@ -526,12 +521,12 @@ function openLive(id){
       <div class="m-item"><div class="k">输出价格</div><div class="v">${fmtPricePerM(m.pricing?.completion)}/1M</div></div>
       <div class="m-item"><div class="k">知识截止</div><div class="v">${m.knowledge_cutoff || '—'}</div></div>
     </div>
-    <div class="m-sec"><h4>🔧 输入模态</h4><div class="m-row"><span class="tag">${liveModality(mods) || '文本'}</span>${m.reasoning?.supported_efforts ? '<span class="tag think">🧠 支持推理模式</span>' : ''}</div></div>
-    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(m), RADAR_LIVE_COLOR, 170)}</div></div>
-    <div class="m-sec"><h4>📅 上线时间</h4><p>${m.created ? new Date(m.created*1000).toLocaleString('zh-CN') : '未知'}</p></div>
-    ${m.description ? `<div class="m-sec"><h4>📝 官方描述</h4><p>${esc(m.description.slice(0,300))}</p></div>` : ''}
-    ${local ? `<div class="m-sec"><h4>🔗 本站档案</h4><p>此模型已有本地实测档案，<a href="#" onclick="closeModal();openModal('${local.id}');return false;">点击查看</a>（等级/场景/Agent工具）</p></div>` : ''}
-    <div class="m-sec"><h4>🔗 来源</h4><p>OpenRouter API：<a href="https://openrouter.ai/${esc(m.id)}" target="_blank">https://openrouter.ai/${esc(m.id)}</a></p></div>`;
+    <div class="m-sec"><h4>输入模态</h4><div class="m-row"><span class="tag">${liveModality(mods) || '文本'}</span>${m.reasoning?.supported_efforts ? '<span class="tag think">🧠 推理</span>' : ''}</div></div>
+    <div class="m-sec"><h4>六维能力</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(m), RADAR_LIVE_COLOR, 170)}</div></div>
+    <div class="m-sec"><h4>上线</h4><p>${m.created ? new Date(m.created*1000).toLocaleString('zh-CN') : '未知'}</p></div>
+    ${m.description ? `<div class="m-sec"><h4>描述</h4><p>${esc(m.description.slice(0,300))}</p></div>` : ''}
+    ${local ? `<div class="m-sec"><h4>本地档案</h4><p><a href="#" onclick="closeModal();openModal('${local.id}');return false;">查看本地档案</a></p></div>` : ''}
+    <div class="m-sec"><h4>来源</h4><p><a href="https://openrouter.ai/${esc(m.id)}" target="_blank">OpenRouter</a></p></div>`;
   document.getElementById('modalMask').classList.add('show');
 }
 
@@ -562,12 +557,12 @@ function openModal(id){
       <div class="m-item"><div class="k">多模态输入</div><div class="v">${m.multimodal.join(' / ')}</div></div>
       <div class="m-item"><div class="k">费用水平</div><div class="v">${m.cost}</div></div>
     </div>
-    <div class="m-sec"><h4>💡 一句话选型</h4><p>${esc(m.bestFor)}</p></div>
-    <div class="m-sec"><h4>🕸️ 六维能力分析</h4><div class="m-row" style="align-items:flex-start">${radarBlock(radarData(m), gradeColor(m.grade), 170)}</div></div>
-    <div class="m-sec"><h4>🎯 适用场景</h4><div class="m-row">${m.scenes.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div></div>
-    <div class="m-sec"><h4>🏆 擅长领域</h4><div class="m-row">${m.strengths.map(s=>`<span class="tag think">${esc(s)}</span>`).join('')}</div></div>
-    <div class="m-sec"><h4>🧩 内置此模型的 Agent 工具</h4><div class="m-row">${toolStr}</div></div>
-    <div class="m-sec"><h4>📝 备注</h4><p>${esc(m.notes)}</p></div>`;
+    <div class="m-sec"><h4>选型</h4><p>${esc(m.bestFor)}</p></div>
+    <div class="m-sec"><h4>六维能力</h4><div class="m-row" style="align-items:flex-start">${radarBlock(radarData(m), gradeColor(m.grade), 170)}</div></div>
+    <div class="m-sec"><h4>场景</h4><div class="m-row">${m.scenes.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div></div>
+    <div class="m-sec"><h4>擅长</h4><div class="m-row">${m.strengths.map(s=>`<span class="tag think">${esc(s)}</span>`).join('')}</div></div>
+    <div class="m-sec"><h4>Agent 工具</h4><div class="m-row">${toolStr}</div></div>
+    <div class="m-sec"><h4>备注</h4><p>${esc(m.notes)}</p></div>`;
   document.getElementById('modalMask').classList.add('show');
 }
 function closeModal(){ document.getElementById('modalMask').classList.remove('show'); }
@@ -664,25 +659,24 @@ function renderStats(){
 
   document.getElementById('hdStats').innerHTML = `
     <div class="stat rise">
-      <div class="stat-title">📦 模型库总览</div>
+      <div class="stat-title">模型库</div>
       <div class="stat-hero">
         <div class="hero-num" data-count="${total}">0</div>
         <div class="hero-sub">
-          <div class="sub-item">Agent 工具 <b data-count2="${TOOLS.length}">0</b></div>
-          <div class="sub-item">1M 上下文 <b style="color:var(--gold)">${oneMN}</b> 款</div>
+          <div class="sub-item">工具 <b data-count2="${TOOLS.length}">0</b> · 1M+ <b style="color:var(--gold)">${oneMN}</b></div>
         </div>
       </div>
     </div>
     <div class="stat rise" style="animation-delay:80ms">
-      <div class="stat-title">🏅 等级分布</div>
+      <div class="stat-title">等级</div>
       ${donut(gradeSegs, total, '模型')}
     </div>
     <div class="stat rise" style="animation-delay:160ms">
-      <div class="stat-title">🧠 能力分布</div>
-      ${donut(capSegs, thinkN, '思考模式')}
+      <div class="stat-title">能力</div>
+      ${donut(capSegs, thinkN, '思考')}
     </div>
     <div class="stat rise" style="animation-delay:240ms">
-      <div class="stat-title">📏 上下文规模</div>
+      <div class="stat-title">上下文</div>
       <div class="barstack">
         <div class="bs-track">${ctxBars}</div>
         ${ctxRows}

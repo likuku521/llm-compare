@@ -240,6 +240,7 @@ main{max-width:1280px;margin:18px auto 56px;padding:0 24px;min-height:40vh}
 @keyframes radarIn{from{opacity:0;transform:scale(.7) rotate(-20deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 .mcard .mc-grade{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;font-weight:900;font-size:16px;color:#0A0E1A;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,.3);position:relative}
 .mcard .mc-grade::after{content:"";position:absolute;inset:-4px;border-radius:14px;border:1px solid currentColor;opacity:.25}
+.mcard .mc-grade.new{width:auto;min-width:46px;padding:0 7px;font-size:11.5px;letter-spacing:.5px;animation:newPulse 2s ease infinite}
 .mcard .mc-name{font-weight:800;font-size:15px;line-height:1.3;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .mcard .mc-name .flag{font-size:13px}
 .mcard .mc-vendor{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -282,6 +283,7 @@ tbody tr:last-child td{border-bottom:none}
 .m-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:9px;white-space:nowrap}
 .m-vendor{color:var(--muted);font-size:12px;white-space:nowrap}
 .grade{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;font-weight:800;font-size:12.5px;color:#0A0E1A;flex-shrink:0;box-shadow:0 0 12px rgba(255,255,255,.07)}
+.grade.new{width:auto;min-width:38px;padding:0 6px;font-size:10px;letter-spacing:.3px}
 .ctx-cell{min-width:130px}
 .ctxbar{display:flex;align-items:center;gap:9px}
 .ctxbar .bar{width:80px;height:6px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;flex-shrink:0}
@@ -294,6 +296,9 @@ tbody tr:last-child td{border-bottom:none}
 .mm i.vid{color:#FF8BA0;border-color:rgba(255,139,160,.35);background:rgba(255,139,160,.07)}
 .tag{display:inline-block;font-size:11px;padding:2px 9px;border-radius:7px;margin:1px 3px 1px 0;background:rgba(255,255,255,.05);color:#A8B4CC;border:1px solid rgba(255,255,255,.08);white-space:nowrap}
 .tag.think{background:rgba(245,201,107,.1);color:var(--gold2);border-color:rgba(245,201,107,.3)}
+.tag.have{background:rgba(54,211,153,.14);color:var(--green2);border-color:rgba(54,211,153,.35)}
+.tag.new{background:rgba(255,123,66,.14);color:#FF7B42;border-color:rgba(255,123,66,.35);animation:newPulse 2s ease infinite}
+@keyframes newPulse{0%,100%{opacity:1}50%{opacity:.65}}
 .cost{font-size:12px;white-space:nowrap;font-weight:600}
 .cost.low{color:var(--b)} .cost.mid{color:var(--warn)} .cost.high{color:var(--danger)}
 .toolcell{display:flex;gap:4px;flex-wrap:wrap}
@@ -438,7 +443,7 @@ footer .src p{margin:3px 0;line-height:1.8}
   <div class="hero-badge"><span class="pulse-dot"></span>实时数据 · 多维对比</div>
   <h1>__SITE_TITLE__</h1>
   <p class="sub">描述任务，即得最优模型</p>
-  <div class="hero-updated"><span class="dot">__UPDATED__</span> · OpenRouter 实时 <span class="fx-badge" id="fxBadge"></span></div>
+  <div class="hero-updated" id="heroUpdated"><span class="dot">__UPDATED__</span> · OpenRouter 实时 <span class="fx-badge" id="fxBadge"></span></div>
 </section>
 
 <!-- ===== 统计区 ===== -->
@@ -451,6 +456,7 @@ footer .src p{margin:3px 0;line-height:1.8}
     <div class="viewtab" id="tabTools" onclick="showView('tools')">🛠️ Agent 工具</div>
     <div class="viewtab" id="tabLive" onclick="showView('live')" style="display:none"><span class="live-dot-inline"></span>🛰️ 实时动态</div>
     <div class="viewmode" id="viewMode">
+      <button class="vm-btn" id="newToggle" onclick="toggleNew()" title="OpenRouter 自动收录新模型开关">🆕 新增</button>
       <button class="vm-btn on" id="vmCards" onclick="setMode('cards')">▦ 卡片</button>
       <button class="vm-btn" id="vmTable" onclick="setMode('table')">☰ 表格</button>
       <button class="vm-btn theme-toggle" id="themeBtn" onclick="toggleTheme()" title="切换黑夜/白天模式">🌙</button>

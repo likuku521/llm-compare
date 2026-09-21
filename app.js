@@ -19,6 +19,7 @@ const toolBadgeClass = {
 const state = {
   view: 'models', mode: 'cards',
   q: '', grade: '', vendor: '', mm: '', sort: 'grade',
+  includeNew: true,
   modalId: null
 };
 
@@ -55,7 +56,7 @@ function renderFxBadge(){
 
 /* ===== 工具函数 ===== */
 function esc(s){return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function gradeColor(g){return META.gradeDef[g] ? META.gradeDef[g].color : '#7A87A6';}
+function gradeColor(g){ if(g==='NEW') return '#FF7B42'; return META.gradeDef[g] ? META.gradeDef[g].color : '#7A87A6'; }
 function fmtCtx(v){return v >= 1000 ? (v/1000).toFixed(v%1000===0?0:1)+'M' : v+'K';}
 function mmIcon(m){
   let h = '';
@@ -68,7 +69,7 @@ function mmIcon(m){
 function costClass(c){return c==='低'?'low':(c==='中'?'mid':'high');}
 /* ===== 六边形雷达图（纯 SVG，无依赖）===== */
 function radarData(m){
-  const gs = META.gradeScore[m.grade]||0;           // 5/4/3/2
+  const gs = m.grade==='NEW' ? 3.5 : (META.gradeScore[m.grade]||0);  // 5/4/3/2（NEW=待评估中位）
   const reasoning = (gs/5)*70 + (m.thinking?30:0);  // 等级70 + 思考30
   const code = (m.strengths||[]).some(s=>/代码|编程/.test(s)) ? 100 : (m.scenes.includes('代码')?80:40);
   const ctx = Math.min(100, m.contextVal/10);       // 1M=100
@@ -126,10 +127,16 @@ function costDisplay(m){
 }
 function findLivePrice(m){
   if(!LIVE || !LIVE.length) return null;
+  // 1. 优先 orId 精确匹配
+  if(m.orId){
+    const hit = LIVE.find(x => x.id === m.orId);
+    if(hit) return hit.pricing && hit.pricing.prompt;
+  }
+  // 2. slug 宽松匹配
   const slug = m.id.toLowerCase();
   const hit = LIVE.find(x => {
     const s = (x.id.split('/').pop() || '').toLowerCase();
-    return s === slug || s.startsWith(slug) || s.includes(slug);
+    return s === slug || s.startsWith(slug) || slug.startsWith(s);
   });
   return hit ? (hit.pricing && hit.pricing.prompt) : null;
 }
@@ -218,7 +225,7 @@ function scoreModel(m, task){
 
 /* ===== 过滤 ===== */
 function filteredModels(){
-  let list = MODELS.slice();
+  let list = allModels().slice();
   if(state.grade) list = list.filter(m => m.grade === state.grade);
   if(state.vendor) list = list.filter(m => m.vendor === state.vendor);
   if(state.mm){
@@ -240,7 +247,7 @@ function filteredModels(){
     }
   } else if(state.sort === 'context') list.sort((a,b) => b.contextVal - a.contextVal);
   else if(state.sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'zh'));
-  else list.sort((a,b) => (META.gradeScore[b.grade]||0) - (META.gradeScore[a.grade]||0));
+  else list.sort((a,b) => (b.grade==='NEW'?99:(META.gradeScore[b.grade]||0)) - (a.grade==='NEW'?99:(META.gradeScore[a.grade]||0)));
   return list;
 }
 
@@ -272,7 +279,7 @@ function renderCards(list){
     return `<div class="mcard rise" style="animation-delay:${Math.min(i*40,500)}ms" data-mid="${m.id}" data-tip-key="model:${m.id}"
       onclick="openModal('${m.id}')">
       <div class="mc-top">
-        <div class="mc-grade" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
+        <div class="mc-grade${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
         <div>
           <div class="mc-name">${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
           <div class="mc-vendor">${esc(m.vendorCn || m.vendor)}<span class="mc-dot">·</span><span class="mc-price">${costDisplay(m)}</span></div>
@@ -301,7 +308,7 @@ function renderCards(list){
 function renderTable(list){
   const rows = list.map(m => `
     <tr onclick="openModal('${m.id}')">
-      <td><span class="m-name"><span class="grade" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></span><div class="m-vendor">${esc(m.vendorCn || m.vendor)}</div></td>
+      <td><span class="m-name"><span class="grade${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></span><div class="m-vendor">${esc(m.vendorCn || m.vendor)}</div></td>
       <td class="ctx-cell"><div class="ctxbar"><div class="bar"><div class="fill" style="width:${Math.min(100, m.contextVal/10)}%"></div></div><span class="txt">${fmtCtx(m.contextVal)}</span></div></td>
       <td><div class="mm">${mmIcon(m.multimodal)}</div></td>
       <td>${m.thinking?'<span class="tag think">🧠 思考</span>':''}${(m.strengths||[]).slice(0,3).map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</td>
@@ -331,6 +338,22 @@ function setMode(mode){
   document.getElementById('vmCards').classList.toggle('on', mode==='cards');
   document.getElementById('vmTable').classList.toggle('on', mode==='table');
   renderModels();
+}
+/* ===== 新收录模型开关 ===== */
+function toggleNew(){
+  state.includeNew = !state.includeNew;
+  try{ localStorage.setItem('llm-include-new', state.includeNew ? '1' : '0'); }catch(e){}
+  syncNewBtn();
+  if(state.grade === 'NEW' && !state.includeNew) state.grade = '';
+  syncFilterUI(); renderModels();
+}
+function syncNewBtn(){
+  const btn = document.getElementById('newToggle');
+  if(!btn) return;
+  const n = AUTONEW.length;
+  btn.classList.toggle('on', state.includeNew && n > 0);
+  btn.textContent = n > 0 ? `🆕 新增 ${n}` : '🆕 新增';
+  btn.style.display = (LIVE_LOADED && n > 0) ? '' : 'none';
 }
 
 /* ===== 工具生态动态（从 OpenRouter LIVE 实时统计）===== */
@@ -400,10 +423,122 @@ function setToolCat(c){
 /* ===== 实时动态（OpenRouter API）===== */
 let LIVE = [];
 let LIVE_LOADED = false;
+let AUTONEW = [];               // 从 LIVE 自动收录的新旗舰模型（并入主视图）
 const OR_API = 'https://openrouter.ai/api/v1/models';
+
+/* OpenRouter 主流厂商映射：vendor前缀 → [中文厂商名, 国家] */
+const OR_VENDOR = {
+  'openai':['OpenAI','美国'], 'anthropic':['Anthropic','美国'], 'google':['Google','美国'],
+  'deepseek':['深度求索','中国'], 'qwen':['阿里','中国'], 'moonshotai':['月之暗面','中国'],
+  'z-ai':['智谱 AI','中国'], 'minimax':['MiniMax','中国'], 'bytedance-seed':['字节跳动','中国'],
+  'tencent':['腾讯','中国'], 'x-ai':['xAI','美国'], 'mistralai':['Mistral','法国'],
+  'meta-llama':['Meta','美国'], 'amazon':['Amazon','美国'], 'baidu':['百度','中国']
+};
+const VENDOR_CN = {'深度求索':'深度求索','阿里':'通义千问','智谱 AI':'智谱AI','腾讯':'腾讯混元'};
+
+/* 本地档案已覆盖的 slug 集合（用于判重） */
+function localSlugSet(){
+  const s = new Set();
+  MODELS.forEach(m => { s.add(m.id.toLowerCase()); if(m.orId) s.add(m.orId.split('/').pop().toLowerCase()); });
+  return s;
+}
+/* 系列家族键：从 slug 提取「字母前缀+版本号」，如 gpt-5.6-luna → gpt5.6 */
+function famKey(slug){
+  const s = slug.toLowerCase();
+  const m = s.match(/([a-z]+-?)?(\d+(?:\.\d+)?)/);
+  const k = m ? (m[1]||'') + m[2] : s;
+  return k.replace(/-/g,'');
+}
+/* 本地档案已覆盖的家族集合 */
+function localFamSet(){
+  const s = new Set();
+  MODELS.forEach(m => {
+    s.add((m.id.split('/')[0]||'').toLowerCase() + '|' + famKey(m.id.split('/').pop()));
+    if(m.orId) s.add((m.orId.split('/')[0]||'').toLowerCase() + '|' + famKey(m.orId.split('/').pop()));
+  });
+  // 本地 id 无 vendor 前缀，补充「厂商→vendor前缀」的家族键
+  const VENDOR2OR = {'OpenAI':'openai','Anthropic':'anthropic','Google':'google','深度求索':'deepseek','阿里':'qwen','月之暗面':'moonshotai','智谱 AI':'z-ai','MiniMax':'minimax','字节跳动':'bytedance-seed','腾讯':'tencent','百度':'baidu'};
+  MODELS.forEach(m => {
+    const ov = VENDOR2OR[m.vendor];
+    if(ov) s.add(ov + '|' + famKey(m.id));
+  });
+  return s;
+}
+/* 从 LIVE 构建自动收录的新模型（每个系列家族取最新，近120天，主流厂商） */
+function buildAutoNew(){
+  AUTONEW = [];
+  if(!LIVE || !LIVE.length) return;
+  const local = localSlugSet();
+  const localFam = localFamSet();
+  const now = Date.now()/1000;
+  const cutoff = now - 120*24*3600;                 // 近 120 天上线
+  // 候选：主流厂商 + 近期上线 + 有上下文 + 非本地已收录/同家族
+  const cand = LIVE.filter(m => {
+    const vendor = (m.id.split('/')[0]||'').toLowerCase();
+    if(!OR_VENDOR[vendor]) return false;
+    if(!(m.created > cutoff)) return false;
+    if(!(m.context_length >= 32000)) return false;   // 排除小上下文专用模型
+    const slug = (m.id.split('/').pop()||'').toLowerCase();
+    if(local.has(slug)) return false;
+    if(local.has(m.id.toLowerCase())) return false;
+    if(localFam.has(vendor + '|' + famKey(slug))) return false;
+    return true;
+  });
+  // 按上线时间降序，家族去重（同厂商同系列只留最新一个）
+  cand.sort((a,b) => b.created - a.created);
+  const seenFam = new Set();
+  const picked = [];
+  for(const m of cand){
+    const vendor = (m.id.split('/')[0]||'').toLowerCase();
+    const fam = vendor + '|' + famKey(m.id.split('/').pop());
+    if(seenFam.has(fam)) continue;
+    seenFam.add(fam);
+    picked.push(m);
+    if(picked.length >= 14) break;                   // 最多收录 14 个
+  }
+  AUTONEW = picked.map(or => orToLocal(or));
+  // 注册 hover 提示
+  AUTONEW.forEach(m => { TIP_DB['model:'+m.id] = autoTipFn(m); });
+}
+/* OpenRouter 模型 → 本地模型结构 */
+function orToLocal(or){
+  const vendorKey = (or.id.split('/')[0]||'').toLowerCase();
+  const [vendor, country] = OR_VENDOR[vendorKey] || [vendorKey, '—'];
+  const ctxK = Math.round((or.context_length||0)/1000);
+  const mods = or.architecture?.input_modalities || [];
+  const multimodal = ['文本'];
+  if(mods.includes('image')) multimodal.push('图像');
+  if(mods.includes('audio')) multimodal.push('音频');
+  if(mods.includes('video')) multimodal.push('视频');
+  const thinking = !!(or.reasoning && (or.reasoning.supported_efforts?.length || or.reasoning.mandatory || or.reasoning.default_enabled));
+  const pIn = parseFloat(or.pricing?.prompt);
+  const perM = isNaN(pIn) ? 3 : pIn*1e6;
+  const cost = perM < 0.5 ? '低' : perM < 3 ? '中' : '高';
+  const slug = or.id.split('/').pop();
+  return {
+    id: 'auto:' + or.id, orId: or.id, name: or.name || slug,
+    vendor, vendorCn: VENDOR_CN[vendor] || vendor, country,
+    grade: 'NEW', context: fmtCtx(ctxK), contextVal: ctxK,
+    multimodal, thinking, cost,
+    scenes: ['新上架'], strengths: [thinking?'推理':'文本', ...(mods.includes('image')?['图像']:[])],
+    bestFor: 'OpenRouter 新收录旗舰（自动同步，待实测评级）',
+    notes: '由 OpenRouter 实时数据自动收录，尚未人工评级。价格/上下文为官方实时值。',
+    tools: [], isAuto: true, created: or.created || 0,
+    liveRef: or
+  };
+}
+function autoTipFn(m){
+  return () => `<div class="tip-title"><span class="tip-dot" style="background:#FF7B42"></span>${esc(m.name)} · NEW · ${m.cost}费用</div>
+    <div class="tip-models">🆕 OpenRouter 自动收录 · ${fmtCtx(m.contextVal)} 上下文${m.thinking?' · 🧠推理':''}</div>
+    <div class="tip-notes">待人工评级 · 点击查看详情</div>`;
+}
+/* 全部模型（本地档案 + 自动收录） */
+function allModels(){ return state.includeNew ? MODELS.concat(AUTONEW) : MODELS; }
 
 function isLocalModel(orId){
   const slug = (orId.split('/').pop() || '').toLowerCase();
+  const inAuto = AUTONEW.some(m => m.orId === orId);
+  if(inAuto) return true;
   return MODELS.some(m => {
     const mid = m.id.toLowerCase();
     return slug === mid || slug.startsWith(mid) || slug.includes(mid);
@@ -456,20 +591,40 @@ async function fetchLive(){
     clearTimeout(timer);
     const d = await res.json();
     const raw = d.data || [];
-    const SKIP_ID = /router|fusion|body builder|:batch|:extended|:nightly|:free/i;
+    const SKIP_ID = /router|fusion|body builder|:batch|:extended|:nightly|:free|:custom|preview-customtools/i;
     LIVE = raw.filter(m =>
       m.id && !SKIP_ID.test(m.id) && !m.id.startsWith('~') &&
       (m.context_length || 0) > 0 &&
       parseFloat(m.pricing?.prompt ?? '') >= 0
     );
     LIVE_LOADED = true;
+    // 缓存到 localStorage（断网/API 挂掉时可兜底）
+    try{ localStorage.setItem('llm-live-cache', JSON.stringify({ts: Date.now(), n: LIVE.length, models: LIVE.slice(0, 200)})); }catch(e){}
   }catch(e){
-    LIVE_LOADED = false; LIVE = [];
+    // 失败时尝试用缓存兜底
+    try{
+      const c = JSON.parse(localStorage.getItem('llm-live-cache') || 'null');
+      if(c && c.models && c.models.length){ LIVE = c.models; LIVE_LOADED = true; LIVE_CACHED = true; }
+    }catch(e2){}
+    if(!LIVE_LOADED){ LIVE_LOADED = false; LIVE = []; }
   }
+  buildAutoNew();          // 自动收录新旗舰进主视图
   renderLive();
+  renderStats();           // 统计数字含新收录
+  buildFilters();          // 筛选器加 NEW 等级
+  syncNewBtn();            // 新增开关按钮
+  updateHeroStamp();       // hero 时间戳
   // 汇率/实时价格到位后，模型视图的卡片费用也刷新；工具视图生态统计也刷新
   if(state.view === 'models') renderModels();
   if(state.view === 'tools') renderTools();
+}
+let LIVE_CACHED = false;
+function updateHeroStamp(){
+  const el = document.getElementById('heroUpdated');
+  if(!el) return;
+  const t = new Date().toLocaleString('zh-CN', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false});
+  const newN = AUTONEW.length;
+  el.querySelector('.dot').textContent = `${t} 实时同步${newN ? ` · 🆕 自动收录 ${newN} 个新模型` : ''}${LIVE_CACHED ? ' · 缓存数据' : ''}`;
 }
 
 function renderLive(){
@@ -562,7 +717,8 @@ function showView(v){
 
 /* ===== 详情弹窗 ===== */
 function openModal(id){
-  const m = MODELS.find(x => x.id === id); if(!m) return;
+  const m = allModels().find(x => x.id === id); if(!m) return;
+  if(m.isAuto) return openAutoModal(m);
   const tools = (m.tools||[]).map(tid => toolById[tid]).filter(Boolean);
   const toolStr = tools.length ? tools.map(t => `<span class="tool-badge ${toolBadgeClass[t.id]||'other'}" style="cursor:default">${esc(t.name)}</span>`).join('') : '<span style="color:var(--dim)">未内置任何 Agent 工具</span>';
   document.getElementById('modalBody').innerHTML = `
@@ -583,16 +739,38 @@ function openModal(id){
     <div class="m-sec"><h4>备注</h4><p>${esc(m.notes)}</p></div>`;
   document.getElementById('modalMask').classList.add('show');
 }
+/* 自动收录模型弹窗（用 OpenRouter 实时数据） */
+function openAutoModal(m){
+  const or = m.liveRef || {};
+  const days = m.created ? Math.max(0, Math.round((Date.now()/1000 - m.created)/86400)) : null;
+  document.getElementById('modalBody').innerHTML = `
+    <button class="close" onclick="closeModal()">✕</button>
+    <h2><span class="grade" style="background:${gradeColor('NEW')}">NEW</span>${esc(m.name)}</h2>
+    <div class="m-sub">${esc(m.vendorCn)} · ${m.country} · ${fmtCtx(m.contextVal)} 上下文 · ${m.cost}费用${m.thinking?' · 🧠 推理':''}${days!==null?` · ${days}天前上线`:''}</div>
+    <div class="m-grid">
+      <div class="m-item"><div class="k">状态</div><div class="v" style="color:#FF7B42">新收录 · 待评级</div></div>
+      <div class="m-item"><div class="k">输入价格</div><div class="v">${fmtPricePerM(or.pricing?.prompt)}/1M</div></div>
+      <div class="m-item"><div class="k">输出价格</div><div class="v">${fmtPricePerM(or.pricing?.completion)}/1M</div></div>
+      <div class="m-item"><div class="k">多模态</div><div class="v">${m.multimodal.join(' / ')}</div></div>
+    </div>
+    <div class="m-sec"><h4>六维能力（实时指标推导）</h4><div class="m-row" style="align-items:flex-start">${radarBlock(liveRadarData(or), RADAR_LIVE_COLOR, 170)}</div></div>
+    ${or.description ? `<div class="m-sec"><h4>官方描述</h4><p>${esc(or.description.slice(0,300))}</p></div>` : ''}
+    <div class="m-sec"><h4>来源</h4><p>OpenRouter 自动收录 · <a href="https://openrouter.ai/${esc(m.orId)}" target="_blank">模型主页</a></p></div>`;
+  document.getElementById('modalMask').classList.add('show');
+}
 function closeModal(){ document.getElementById('modalMask').classList.remove('show'); }
 document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
 
 /* ===== 筛选器构建 ===== */
 function buildFilters(){
-  const grades = Object.keys(META.gradeDef);
+  const grades = Object.keys(META.gradeDef).concat(AUTONEW.length ? ['NEW'] : []);
   document.getElementById('gradeFilter').innerHTML =
     `<span>等级</span>` +
-    grades.map(g => `<button class="fbtn ${state.grade===g?'on':''}" data-k="grade" data-v="${g}">${g} ${META.gradeDef[g].label}</button>`).join('');
-  const vendors = [...new Set(MODELS.map(m => m.vendor))].sort();
+    grades.map(g => {
+      const lbl = g === 'NEW' ? '新收录' : META.gradeDef[g].label;
+      return `<button class="fbtn ${state.grade===g?'on':''}" data-k="grade" data-v="${g}">${g} ${lbl}</button>`;
+    }).join('');
+  const vendors = [...new Set(allModels().map(m => m.vendor))].sort();
   document.getElementById('vendorFilter').innerHTML =
     `<span>厂商</span>` +
     vendors.map(v => `<button class="fbtn vendor-${v} ${state.vendor===v?'on':''}" data-k="vendor" data-v="${v}">${v}</button>`).join('');
@@ -622,17 +800,18 @@ function syncFilterUI(){
 
 /* ===== 统计图表（v3.1：环形图/堆叠条）===== */
 function renderStats(){
-  const gs = Object.keys(META.gradeDef);
-  const total = MODELS.length;
+  const list = allModels();
+  const gs = Object.keys(META.gradeDef).concat(AUTONEW.length ? ['NEW'] : []);
+  const total = list.length;
   // 数据
   const gradeCount = {};
-  gs.forEach(g => gradeCount[g] = MODELS.filter(m=>m.grade===g).length);
-  const thinkN = MODELS.filter(m=>m.thinking).length;
-  const mmN = MODELS.filter(m => m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频')).length;
-  const oneMN = MODELS.filter(m=>m.contextVal>=1000).length;
+  gs.forEach(g => gradeCount[g] = list.filter(m=>m.grade===g).length);
+  const thinkN = list.filter(m=>m.thinking).length;
+  const mmN = list.filter(m => m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频')).length;
+  const oneMN = list.filter(m=>m.contextVal>=1000).length;
   // 上下文分段
-  const ctx256 = MODELS.filter(m=>m.contextVal>=256 && m.contextVal<1000).length;
-  const ctx128 = MODELS.filter(m=>m.contextVal<256).length;
+  const ctx256 = list.filter(m=>m.contextVal>=256 && m.contextVal<1000).length;
+  const ctx128 = list.filter(m=>m.contextVal<256).length;
   // 环形图 arc 生成（SVG stroke-dasharray 动画 + data-tip 悬浮）
   function donut(segs, centerNum, centerLbl){
     const R = 42, C = 2*Math.PI*R;
@@ -655,21 +834,21 @@ function renderStats(){
     </div>`;
   }
   const gradeSegs = gs.map(g => ({
-    v: gradeCount[g], c: META.gradeDef[g].color, l: g+'级',
-    tipTitle: g+' 级模型', tipModels: MODELS.filter(m=>m.grade===g).map(m=>m.name)
-  }));
-  const thinkModels = MODELS.filter(m=>m.thinking).map(m=>m.name);
-  const mmModels = MODELS.filter(m => !m.thinking && (m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频'))).map(m=>m.name);
-  const textModels = MODELS.filter(m => !m.thinking && !(m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频'))).map(m=>m.name);
+    v: gradeCount[g], c: g==='NEW' ? '#FF7B42' : META.gradeDef[g].color, l: g+'级',
+    tipTitle: g==='NEW' ? '新收录模型' : g+' 级模型', tipModels: list.filter(m=>m.grade===g).map(m=>m.name)
+  })).filter(s => s.v > 0);
+  const thinkModels = list.filter(m=>m.thinking).map(m=>m.name);
+  const mmModels = list.filter(m => !m.thinking && (m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频'))).map(m=>m.name);
+  const textModels = list.filter(m => !m.thinking && !(m.multimodal.length>1 || m.multimodal.includes('图像') || m.multimodal.includes('音频') || m.multimodal.includes('视频'))).map(m=>m.name);
   const capSegs = [
     {v: thinkN, c: 'var(--gold)', l: '思考模式', tipTitle: '思考模式模型', tipModels: thinkModels},
     {v: mmModels.length, c: 'var(--violet)', l: '多模态', tipTitle: '多模态模型（无思考）', tipModels: mmModels},
     {v: textModels.length, c: 'rgba(255,255,255,.14)', l: '纯文本', tipTitle: '纯文本模型', tipModels: textModels}
   ].filter(s => s.v > 0);
   const ctxSegs = [
-    {v: oneMN, c: 'var(--gold)', l: '1M+', tipTitle: '1M+ 上下文模型', tipModels: MODELS.filter(m=>m.contextVal>=1000).map(m=>m.name)},
-    {v: ctx256, c: 'var(--cyan)', l: '256K~999K', tipTitle: '256K~999K 模型', tipModels: MODELS.filter(m=>m.contextVal>=256 && m.contextVal<1000).map(m=>m.name)},
-    {v: ctx128, c: 'rgba(255,255,255,.22)', l: '<256K', tipTitle: '<256K 上下文模型', tipModels: MODELS.filter(m=>m.contextVal<256).map(m=>m.name)}
+    {v: oneMN, c: 'var(--gold)', l: '1M+', tipTitle: '1M+ 上下文模型', tipModels: list.filter(m=>m.contextVal>=1000).map(m=>m.name)},
+    {v: ctx256, c: 'var(--cyan)', l: '256K~999K', tipTitle: '256K~999K 模型', tipModels: list.filter(m=>m.contextVal>=256 && m.contextVal<1000).map(m=>m.name)},
+    {v: ctx128, c: 'rgba(255,255,255,.22)', l: '<256K', tipTitle: '<256K 上下文模型', tipModels: list.filter(m=>m.contextVal<256).map(m=>m.name)}
   ].filter(s => s.v > 0);
   const ctxBars = ctxSegs.map(s => `<div class="bs-seg" style="background:${s.c};flex-basis:${s.v/total*100}%"
     data-tip="${esc(s.tipTitle)}" data-models="${esc(s.tipModels.join(','))}"></div>`).join('');
@@ -856,9 +1035,11 @@ function syncThemeBtn(){
 /* ===== 初始化 ===== */
 document.getElementById('searchBox').addEventListener('input', e => { state.q = e.target.value.trim(); renderModels(); });
 document.getElementById('sortBox').addEventListener('change', e => { state.sort = e.target.value; renderModels(); });
+try{ state.includeNew = localStorage.getItem('llm-include-new') !== '0'; }catch(e){}
 renderStats();
 buildFilters();
 renderModels();
 syncThemeBtn();
+syncNewBtn();
 fetchLive();
 fetchFx();  // 异步拉取实时汇率，失败自动回退 meta 固定值

@@ -8,14 +8,24 @@
     "grade": "B",
     "context": "128K",
     "contextVal": 128,
-    "multimodal": ["文本"],
+    "multimodal": [
+      "文本"
+    ],
     "thinking": false,
     "cost": "低",
-    "scenes": ["日常任务", "中文", "性价比"],
-    "strengths": ["中文稳定", "性价比"],
+    "scenes": [
+      "日常任务",
+      "中文",
+      "性价比"
+    ],
+    "strengths": [
+      "中文稳定",
+      "性价比"
+    ],
     "bestFor": "预算敏感的中文日常任务",
     "notes": "前代主力，仍广泛使用",
-    "tools": []
+    "tools": [],
+    "orId": "z-ai/glm-4.6"
   },
   {
     "id": "gemini-3-flash",
@@ -26,14 +36,32 @@
     "grade": "A",
     "context": "1M",
     "contextVal": 1000,
-    "multimodal": ["文本", "图像", "音频", "视频"],
+    "multimodal": [
+      "文本",
+      "图像",
+      "音频",
+      "视频"
+    ],
     "thinking": true,
     "cost": "低",
-    "scenes": ["多模态", "快速任务", "长上下文", "性价比"],
-    "strengths": ["速度", "多模态", "1M 上下文", "性价比"],
+    "scenes": [
+      "多模态",
+      "快速任务",
+      "长上下文",
+      "性价比"
+    ],
+    "strengths": [
+      "速度",
+      "多模态",
+      "1M 上下文",
+      "性价比"
+    ],
     "bestFor": "多模态 + 长上下文 + 成本敏感",
     "notes": "Flash 系列性价比高，多模态能力完整",
-    "tools": ["gemini-cli"]
+    "tools": [
+      "gemini-cli"
+    ],
+    "orId": "google/gemini-3-flash-preview"
   },
   {
     "id": "claude-haiku-4.5",
@@ -44,14 +72,28 @@
     "grade": "B",
     "context": "200K",
     "contextVal": 200,
-    "multimodal": ["文本", "图像"],
+    "multimodal": [
+      "文本",
+      "图像"
+    ],
     "thinking": false,
     "cost": "低",
-    "scenes": ["快速任务", "日常", "性价比"],
-    "strengths": ["速度快", "成本低"],
+    "scenes": [
+      "快速任务",
+      "日常",
+      "性价比"
+    ],
+    "strengths": [
+      "速度快",
+      "成本低"
+    ],
     "bestFor": "低延迟高性价比任务",
     "notes": "轻量版，适合高并发",
-    "tools": ["cursor", "claude-code"]
+    "tools": [
+      "cursor",
+      "claude-code"
+    ],
+    "orId": "anthropic/claude-haiku-4.5"
   },
   {
     "id": "gpt-4.5",
@@ -62,14 +104,27 @@
     "grade": "A",
     "context": "128K",
     "contextVal": 128,
-    "multimodal": ["文本", "图像"],
+    "multimodal": [
+      "文本",
+      "图像"
+    ],
     "thinking": false,
     "cost": "中",
-    "scenes": ["通用对话", "代码", "写作"],
-    "strengths": ["综合稳定", "对话自然"],
+    "scenes": [
+      "通用对话",
+      "代码",
+      "写作"
+    ],
+    "strengths": [
+      "综合稳定",
+      "对话自然"
+    ],
     "bestFor": "前代旗舰，通用任务仍然可靠",
     "notes": "前代旗舰，逐步让位于 GPT-5.x",
-    "tools": ["cursor", "copilot"]
+    "tools": [
+      "cursor",
+      "copilot"
+    ]
   },
   {
     "id": "kimi-k2.5",
@@ -80,14 +135,26 @@
     "grade": "B",
     "context": "256K",
     "contextVal": 256,
-    "multimodal": ["文本", "图像"],
+    "multimodal": [
+      "文本",
+      "图像"
+    ],
     "thinking": false,
     "cost": "低",
-    "scenes": ["文档", "长文本", "中文"],
-    "strengths": ["长文本", "中文", "文档处理"],
+    "scenes": [
+      "文档",
+      "长文本",
+      "中文"
+    ],
+    "strengths": [
+      "长文本",
+      "中文",
+      "文档处理"
+    ],
     "bestFor": "中文长文档处理",
     "notes": "长文本能力强的口碑款",
-    "tools": []
+    "tools": [],
+    "orId": "moonshotai/kimi-k2.5"
   },
   {
     "id": "ernie-5",
@@ -98,11 +165,21 @@
     "grade": "B",
     "context": "128K",
     "contextVal": 128,
-    "multimodal": ["文本", "图像"],
+    "multimodal": [
+      "文本",
+      "图像"
+    ],
     "thinking": false,
     "cost": "中",
-    "scenes": ["搜索", "中文", "办公"],
-    "strengths": ["百度搜索生态", "中文"],
+    "scenes": [
+      "搜索",
+      "中文",
+      "办公"
+    ],
+    "strengths": [
+      "百度搜索生态",
+      "中文"
+    ],
     "bestFor": "百度生态内中文任务",
     "notes": "依托搜索生态，中文场景稳定",
     "tools": []
@@ -116,11 +193,22 @@
     "grade": "A",
     "context": "128K",
     "contextVal": 128,
-    "multimodal": ["文本", "图像", "视频"],
+    "multimodal": [
+      "文本",
+      "图像",
+      "视频"
+    ],
     "thinking": false,
     "cost": "中",
-    "scenes": ["视频理解", "图像", "多模态"],
-    "strengths": ["视频理解", "中文多模态"],
+    "scenes": [
+      "视频理解",
+      "图像",
+      "多模态"
+    ],
+    "strengths": [
+      "视频理解",
+      "中文多模态"
+    ],
     "bestFor": "中文视频/图像理解",
     "notes": "智谱视觉系列，视频理解突出",
     "tools": []
@@ -134,14 +222,25 @@
     "grade": "B",
     "context": "128K",
     "contextVal": 128,
-    "multimodal": ["文本", "音频"],
+    "multimodal": [
+      "文本",
+      "音频"
+    ],
     "thinking": false,
     "cost": "低",
-    "scenes": ["语音", "对话", "日常"],
-    "strengths": ["语音能力强", "性价比"],
+    "scenes": [
+      "语音",
+      "对话",
+      "日常"
+    ],
+    "strengths": [
+      "语音能力强",
+      "性价比"
+    ],
     "bestFor": "语音交互场景",
     "notes": "语音能力是其特色",
-    "tools": []
+    "tools": [],
+    "orId": "minimax/minimax-m2"
   },
   {
     "id": "yi-lightning",
@@ -152,11 +251,20 @@
     "grade": "C",
     "context": "128K",
     "contextVal": 128,
-    "multimodal": ["文本"],
+    "multimodal": [
+      "文本"
+    ],
     "thinking": false,
     "cost": "低",
-    "scenes": ["日常任务", "中文", "性价比"],
-    "strengths": ["轻量", "中文"],
+    "scenes": [
+      "日常任务",
+      "中文",
+      "性价比"
+    ],
+    "strengths": [
+      "轻量",
+      "中文"
+    ],
     "bestFor": "轻量中文任务",
     "notes": "轻量级选择",
     "tools": []
@@ -170,13 +278,24 @@
     "grade": "B",
     "context": "128K",
     "contextVal": 128,
-    "multimodal": ["文本", "图像"],
+    "multimodal": [
+      "文本",
+      "图像"
+    ],
     "thinking": false,
     "cost": "低",
-    "scenes": ["图像", "中文", "日常"],
-    "strengths": ["图像生成", "中文"],
+    "scenes": [
+      "图像",
+      "中文",
+      "日常"
+    ],
+    "strengths": [
+      "图像生成",
+      "中文"
+    ],
     "bestFor": "中文图像相关任务",
     "notes": "图像能力是其特色",
-    "tools": []
+    "tools": [],
+    "orId": "stepfun/step-3.5-flash"
   }
 ]

@@ -463,7 +463,7 @@ footer .src p{margin:3px 0;line-height:1.8}
     </div>
   </div>
   <div class="tb-row2">
-    <input class="searchbox" id="searchBox" placeholder="🔍 搜索或描述任务，如「做PPT」…">
+    <input class="searchbox" id="searchBox" placeholder="🔍 描述需求或搜模型，如「做公众号」「便宜好用」「Kimi」…">
     <div class="fgroup" id="gradeFilter"></div>
     <div class="fgroup" id="vendorFilter"></div>
     <div class="fgroup" id="mmFilter"></div>
@@ -2793,16 +2793,107 @@ const TASKS = [
 
 function matchTask(q){
   const lower = q.toLowerCase();
-  for(const t of TASKS){ if(t.kw.some(k => lower.includes(k))) return t; }
-  return null;
+  // 最长关键词命中优先（"超长PDF论文" → 长文档任务，而非被"论文"抢走）
+  let best = null, bestLen = 0;
+  for(const t of TASKS){
+    for(const k of t.kw){
+      if(lower.includes(k) && k.length > bestLen){ best = t; bestLen = k.length; }
+    }
+  }
+  return best;
+}
+
+/* ===== 通用需求信号推断（面向小白：任何自然语言需求都能推荐）===== */
+const SIGNALS = [
+  { re:/公众号|自媒体|推文|文章|博客|写作|文案|写文|稿件|小说|故事|剧本|诗|起名|标题|广告|小红书|抖音|快手|视频脚本|直播|带货|种草|涨粉/, scenes:["创作","中文"], strengths:["写作","写作质量","中文","创作"], label:"内容创作" },
+  { re:/图|画|海报|设计|照片|看图|识图|视觉|logo|封面|插画|截图|修图|p图/, scenes:["多模态理解","图像"], strengths:["图像"], label:"图像能力", needMM:true },
+  { re:/视频|剪辑|音视频|影片/, scenes:["视频"], strengths:["视频理解"], label:"视频理解", needMM:true },
+  { re:/语音|音频|转写|播客|配音|听写|录音|会议记录/, scenes:["音频"], strengths:["语音"], label:"音频处理", needMM:true },
+  { re:/论文|文献|书|合同|长文|总结|阅读|万字|研究|调研|报告|年报|财报/, scenes:["长文档","长程任务"], strengths:["长上下文","长程任务"], label:"长文档", needBigCtx:true },
+  { re:/代码|编程|开发|程序|脚本|bug|前端|后端|python|java|sql|c\+\+|网站|app|软件|算法|爬虫/, scenes:["代码"], strengths:["代码","编程","纯文本编程强"], label:"代码开发" },
+  { re:/数学|推理|逻辑|计算|证明|难题|物理|化学|奥数/, scenes:["深度推理"], strengths:["数学推理","深度推理","推理"], label:"推理分析" },
+  { re:/数据|表格|excel|报表|统计|图表|分析/, scenes:["数据分析","办公"], strengths:["数据处理","分析"], label:"数据分析" },
+  { re:/翻译|英文|英语|日语|韩语|外语|中译|英译/, scenes:["中文","通用对话"], strengths:["中文","翻译"], label:"翻译" },
+  { re:/ppt|演示|汇报|幻灯|路演|提案/, scenes:["办公"], strengths:["办公"], label:"办公演示" },
+  { re:/agent|智能体|自动化|工作流|批量|定时|流程/, scenes:["Agent","长程任务"], strengths:["Agent","长程自主"], label:"Agent自动化" },
+  { re:/中文|公文|政务|国企|体制|党建|机关|红头/, scenes:["中文","办公"], strengths:["中文","中文办公"], label:"中文办公" },
+  { re:/学习|辅导|作业|备课|教案|课件|教学|学生|考试|刷题|网课|老师|教育/, scenes:["创作","办公","中文"], strengths:["写作","中文"], label:"教育学习" },
+  { re:/聊天|陪伴|情感|心理|咨询|问答|对话/, scenes:["通用对话"], strengths:["对话"], label:"对话问答" },
+  { re:/办公|邮件|会议|日程|文档|周报|日报|纪要/, scenes:["办公"], strengths:["办公","中文办公"], label:"日常办公" },
+  { re:/电商|客服|营销|推广|运营|私域|社群|用户/, scenes:["办公","创作","中文"], strengths:["中文","写作"], label:"运营营销" },
+  { re:/法律|法规|条款|合规|诉讼|律师/, scenes:["长文档","中文"], strengths:["长上下文","中文"], label:"法律合规", needBigCtx:true },
+  { re:/医疗|健康|诊断|药|临床|病历/, scenes:["深度推理","长文档"], strengths:["推理"], label:"医疗健康" },
+  { re:/金融|投资|股票|基金|理财|风控|审计|会计|税务/, scenes:["数据分析","长文档"], strengths:["数据处理","分析"], label:"金融财务" },
+  { re:/便宜|免费|省钱|低成本|性价比|白菜|不花钱/, label:"低成本", costLow:true },
+  { re:/最好|最强|顶级|专业|旗舰|高质量|不差钱|天花板/, label:"旗舰品质", gradeHigh:true },
+  { re:/快|速度|秒回|实时|低延迟|急用/, label:"响应快" },
+  { re:/新手|小白|入门|简单|易用|不懂/, label:"新手友好", costLow:true }
+];
+
+function inferTask(q){
+  const lower = q.toLowerCase();
+  const hits = SIGNALS.filter(s => s.re.test(lower));
+  if(!hits.length) return null;
+  const scenes = [...new Set(hits.flatMap(h => h.scenes || []))];
+  const strengths = [...new Set(hits.flatMap(h => h.strengths || []))];
+  const labels = hits.map(h => h.label);
+  // 信号命中长度（与词典 PK 用：谁命中的词更长谁更具体）
+  let bestLen = 0;
+  for(const h of hits){
+    const src = h.re.source.split('|');
+    for(const w of src){ if(w.length > bestLen && lower.includes(w.toLowerCase())) bestLen = w.length; }
+  }
+  return {
+    label: labels.slice(0, 2).join(' + '),
+    scenes, strengths,
+    flags: {
+      needMM: hits.some(h => h.needMM),
+      needBigCtx: hits.some(h => h.needBigCtx),
+      costLow: hits.some(h => h.costLow),
+      gradeHigh: hits.some(h => h.gradeHigh)
+    },
+    detected: labels,
+    sigLen: bestLen,
+    inferred: true,
+    reason: '识别到需求：' + labels.join('、')
+  };
+}
+/* 任意查询的任务解析：词典 vs 信号推断，命中更长者为主（更具体），另一个合并补充 */
+function resolveTask(q){
+  const t = matchTask(q);
+  const inf = inferTask(q);
+  if(!t) return inf;
+  if(!inf) return t;
+  const tLen = t.kw.reduce((a, k) => q.toLowerCase().includes(k) ? Math.max(a, k.length) : a, 0);
+  const primary = (inf.sigLen || 0) > tLen ? inf : t;   // 更长命中 = 更具体 = 主任务
+  const secondary = primary === inf ? t : inf;
+  return Object.assign({}, primary, {
+    scenes: [...new Set([...(primary.scenes||[]), ...(secondary.scenes||[])])],
+    strengths: [...new Set([...(primary.strengths||[]), ...(secondary.strengths||[])])],
+    top: primary.top || secondary.top,
+    flags: Object.assign({}, secondary.flags, primary.flags),
+    reason: primary.reason + '（兼顾' + secondary.label + '）'
+  });
+}
+/* 按名称/厂商精确查找（用户明确搜某模型时） */
+function findByName(q){
+  const lower = q.toLowerCase();
+  return allModels().filter(m => {
+    const hay = [m.name, m.vendor, m.vendorCn, m.id].join(' ').toLowerCase();
+    return hay.includes(lower);
+  });
 }
 function scoreModel(m, task){
   let s = 0;
   (task.scenes||[]).forEach(sc => { if((m.scenes||[]).includes(sc)) s += 3; });
   (task.strengths||[]).forEach(st => { if((m.strengths||[]).includes(st)) s += 2; });
   if(task.top && task.top.includes(m.id)) s += 6;
-  s += (META.gradeScore[m.grade]||0);
-  if(m.cost === '低') s += 1;
+  const f = task.flags || {};
+  s += (META.gradeScore[m.grade]||0) * (f.gradeHigh ? 2 : 1);
+  if(m.cost === '低') s += f.costLow ? 4 : 1;
+  if(f.needMM && (m.multimodal.length > 1)) s += 5;
+  if(f.needBigCtx && m.contextVal >= 256) s += 4;
+  if(m.grade === 'NEW') s -= 2;   // 未评级稍降权
   return s;
 }
 
@@ -2817,16 +2908,29 @@ function filteredModels(){
     else if(state.mm === '1M上下文') list = list.filter(m => m.contextVal >= 1000);
   }
   if(state.q){
-    const task = matchTask(state.q);
-    if(task){
-      list = list.map(m => ({m, s: scoreModel(m, task)}))
+    const q = state.q.toLowerCase();
+    // 1. 明确搜某个模型/厂商名 → 精确命中优先
+    const named = findByName(state.q);
+    const task = resolveTask(state.q);
+    if(named.length && !task){
+      list = named;
+    } else if(task){
+      // 2. 任务/需求识别 → 按匹配度推荐（含 named 命中的加权）
+      list = list.map(m => ({m, s: scoreModel(m, task) + (named.includes(m) ? 10 : 0)}))
         .sort((a,b) => b.s - a.s).slice(0, 8).map(x => x.m);
     } else {
-      const q = state.q.toLowerCase();
-      list = list.filter(m => {
+      // 3. 普通全文搜索
+      const txt = list.filter(m => {
         const hay = [m.name, m.vendor, m.vendorCn, m.bestFor, m.strengths.join(' '), m.scenes.join(' '), m.notes, fmtCtx(m.contextVal), m.context].join(' ').toLowerCase();
         return hay.includes(q);
       });
+      if(txt.length){
+        list = txt;
+      } else {
+        // 4. 都没命中 → 通用推荐兜底（综合等级 Top8，永不空手而归）
+        list = list.map(m => ({m, s: (META.gradeScore[m.grade]||0) + (m.grade==='NEW'?2.5:0)}))
+          .sort((a,b) => b.s - a.s).slice(0, 8).map(x => x.m);
+      }
     }
   } else if(state.sort === 'context') list.sort((a,b) => b.contextVal - a.contextVal);
   else if(state.sort === 'name') list.sort((a,b) => a.name.localeCompare(b.name, 'zh'));
@@ -2837,16 +2941,29 @@ function filteredModels(){
 /* ===== 推荐横幅 ===== */
 function recoBanner(){
   if(!state.q) return '';
-  const task = matchTask(state.q);
-  if(!task) return '';
-  const scored = MODELS.map(m => ({m, s: scoreModel(m, task)}))
+  const task = resolveTask(state.q);
+  const named = findByName(state.q);
+  // 通用兜底横幅（搜什么都推荐，永不空手）
+  if(!task && !named.length){
+    const scored = allModels().map(m => ({m, s: (META.gradeScore[m.grade]||0) + (m.grade==='NEW'?2.5:0)}))
+      .sort((a,b) => b.s - a.s).slice(0, 3);
+    const chips = scored.map((x, i) => `<span class="reco-chip" style="animation-delay:${i*90}ms" onclick="openModal('${x.m.id}')">
+      <span class="grade${x.m.grade==='NEW'?' new':''}" style="background:${gradeColor(x.m.grade)};width:26px;height:26px;font-size:12px;border-radius:8px">${x.m.grade}</span>
+      <b>${esc(x.m.name)}</b><i>${esc((x.m.bestFor||'').split('——')[0])}</i></span>`).join('');
+    return `<div class="reco">
+      <div class="reco-head">💡 <b>综合推荐</b><span class="reco-reason">描述你的需求（如「做公众号」「翻译合同」「便宜好用」），我会为你匹配模型</span></div>
+      <div class="reco-chips">${chips}</div>
+    </div>`;
+  }
+  if(!task) return '';  // 只命中模型名，无需推荐横幅
+  const scored = allModels().map(m => ({m, s: scoreModel(m, task) + (named.includes(m) ? 10 : 0)}))
     .sort((a,b) => b.s - a.s).slice(0, 3);
   const chips = scored.map((x, i) => {
     const m = x.m;
     return `<span class="reco-chip" style="animation-delay:${i*90}ms" onclick="openModal('${m.id}')">
-      <span class="grade" style="background:${gradeColor(m.grade)};width:26px;height:26px;font-size:12px;border-radius:8px">${m.grade}</span>
+      <span class="grade${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)};width:26px;height:26px;font-size:12px;border-radius:8px">${m.grade}</span>
       <b>${esc(m.name)}</b>
-      <i>${esc(m.bestFor.split('——')[0])}</i>
+      <i>${esc((m.bestFor||'').split('——')[0])}</i>
     </span>`;
   }).join('');
   return `<div class="reco">

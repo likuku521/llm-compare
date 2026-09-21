@@ -19,6 +19,8 @@ def main():
         if f.startswith('models_part') and f.endswith('.json'):
             models.extend(load_json(os.path.join(BASE, 'data', f)))
     tools = load_json(os.path.join(BASE, 'data', 'tools.json'))
+    icons_path = os.path.join(BASE, 'data', 'icons.json')
+    icons = load_json(icons_path) if os.path.exists(icons_path) else {}
 
     # 校验工具引用
     model_ids = {m['id'] for m in models}
@@ -31,7 +33,7 @@ def main():
             if tid not in {t['id'] for t in tools}:
                 print(f'[WARN] model {m["id"]} 引用了不存在的工具: {tid}')
 
-    data = {'meta': meta, 'models': models, 'tools': tools}
+    data = {'meta': meta, 'models': models, 'tools': tools, 'icons': icons}
     data_json = json.dumps(data, ensure_ascii=False, indent=1)
     # 防止 </script> 截断
     data_json = data_json.replace('</', '<\\/')

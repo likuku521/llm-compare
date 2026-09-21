@@ -54,6 +54,81 @@ function renderFxBadge(){
   el.innerHTML = `💱 汇率 <b>${FX.toFixed(3)}</b> <span class="fx-src">${src}${t?' · '+t:''}</span>`;
 }
 
+/* ===== 厂商/工具官方 Logo（构建时内联 SVG path，零网络依赖，失败回退字母色块）===== */
+const ICONS = DATA.icons || {};
+/* 模型厂商 → [slug, 品牌色]；slug=null 表示无官方图标，用字母+品牌色 */
+const BRAND_LOGO = {
+  'OpenAI': ['openai', '#10A37F'], 'Anthropic': ['anthropic', '#D4A27F'], 'Google': ['googlegemini', '#4285F4'],
+  '深度求索': ['deepseek', '#4D6BFE'], '阿里': null, '月之暗面': null, '智谱 AI': null,
+  'MiniMax': null, '字节跳动': null, '腾讯': ['tencentqq', '#00A4FF'], '百度': null,
+  '零一万物': null, '阶跃星辰': null, 'xAI': null, 'Mistral': ['mistralai', '#FF7000'],
+  'Meta': ['meta', '#0064E0'], 'Amazon': ['amazon', '#FF9900']
+};
+/* Agent 工具 → [slug, 品牌色]（键 = tools.json 的 id） */
+const TOOL_LOGO = {
+  'cursor': ['cursor', '#9A9A9A'], 'claude-code': ['claude', '#D4A27F'], 'claude-app': ['claude', '#D4A27F'],
+  'codex': ['openai', '#10A37F'], 'copilot': ['githubcopilot', '#C9D4E8'], 'gemini-cli': ['googlegemini', '#4285F4'],
+  'gemini-app': ['googlegemini', '#4285F4'], 'chatgpt': ['openai', '#10A37F'],
+  'windsurf': ['windsurf', '#0CAFF0'], 'zed': ['zed', '#5B9CFF'], 'cline': ['cline', '#4AA8FF'],
+  'cody': ['sourceforge', '#FF6644'], 'amazon-q': ['amazonq', '#FF9900'], 'replit-agent': ['replit', '#F26207'],
+  'v0': ['v0', '#C9D4E8'], 'perplexity': ['perplexity', '#2FA8A8'], 'autogen': ['microsoft', '#00A4EF'],
+  'langchain': ['langchain', '#5FA87F'], 'dify': ['dify', '#3B82F6'], 'n8n': ['n8n', '#EA4B71'],
+  'notion-ai': ['notion', '#C9D4E8'], 'trae': null, 'qoder': null, 'workbuddy': null, 'aider': null,
+  'continue': null, 'jetbrains-ai': null, 'marscode': null, 'lingma': null, 'comate': null, 'codebuddy': null,
+  'lovable': null, 'bolt': null, 'devin': null, 'manus': null, 'doubao': null, 'kimi-app': null,
+  'wenxiaoyan': null, 'yuanbao': null, 'hermes': null, 'crewai': null, 'flowise': null,
+  'dingtalk-ai': null, 'feishu-ai': null, 'wps-ai': null, 'ima': null
+};
+/* 无官方图标时的品牌色字母块（键 = tools.json 的 id） */
+const TOOL_BRAND_COLOR = {
+  'trae': '#00D6B9', 'marscode': '#00C9A7', 'lingma': '#615CED', 'comate': '#2932E1', 'codebuddy': '#006EFF',
+  'aider': '#FF6B35', 'lovable': '#FF4785', 'devin': '#10A37F', 'manus': '#7C3AED', 'hermes': '#F5C96B',
+  'kimi-app': '#1693FF', 'doubao': '#26BBFB', 'wenxiaoyan': '#2E6BE6', 'yuanbao': '#00A4FF', 'crewai': '#FF7A59',
+  'flowise': '#1E88E5', 'wps-ai': '#E32227', 'ima': '#00B578', 'qoder': '#615CED', 'workbuddy': '#2AAE67',
+  'bolt': '#FFD43B', 'continue': '#4A7DFF', 'dingtalk-ai': '#0089FF', 'feishu-ai': '#3370FF', 'jetbrains-ai': '#FF6B35'
+};
+const VENDOR_FALLBACK_COLOR = {'智谱 AI':'#1E4FFF','阿里':'#FF6A00','月之暗面':'#1693FF','MiniMax':'#F24A8B','字节跳动':'#325AB4','百度':'#2932E1','零一万物':'#0033CC','阶跃星辰':'#7B5CFF','xAI':'#8A8A8A'};
+/* vendorCn 别名归一化（自动收录模型的 vendorCn 变体 → 标准厂商键） */
+const VENDOR_ALIAS = {'智谱AI':'智谱 AI','智谱':'智谱 AI','通义千问':'阿里','通义':'阿里','腾讯混元':'腾讯','混元':'腾讯','字节':'字节跳动','豆包':'字节跳动','深度求索':'深度求索','DeepSeek':'深度求索','月之暗面':'月之暗面','Kimi':'月之暗面','百度智能云':'百度'};
+function normVendor(v){ return VENDOR_ALIAS[v] || v; }
+function firstLetter(v){ return /[A-Za-z]/.test(v) ? v[0].toUpperCase() : v[0]; }
+/* 通用 logo 渲染：内联官方 SVG（品牌色着色），无图标回退字母色块 */
+function logoHTML(slug, color, vendorName, size){
+  const letter = firstLetter(vendorName);
+  const paths = slug ? ICONS[slug] : null;
+  if(paths && paths.length){
+    const r = Math.round(size*0.26), p = Math.round(size*0.13);
+    const inner = size - p*2;
+    const body = paths.map(d => `<path d="${d}" fill="${color}"/>`).join('');
+    return `<span class="brand-logo" style="width:${size}px;height:${size}px;border-radius:${r}px;background:${color}14;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="${inner}" height="${inner}" style="display:block">${body}</svg></span>`;
+  }
+  return `<span class="logo-fallback" style="width:${size}px;height:${size}px;background:${color}">${letter}</span>`;
+}
+/* 模型厂商 logo */
+function vendorLogo(vendor, size){
+  size = size || 24;
+  const v = normVendor(vendor || '?');
+  const entry = BRAND_LOGO[v];
+  const slug = entry ? entry[0] : null;
+  const color = (entry && entry[1]) || VENDOR_FALLBACK_COLOR[v] || '#5B6B8C';
+  return logoHTML(slug, color, v, size);
+}
+/* Agent 工具 logo */
+function toolLogo(tid, vendor, size){
+  size = size || 22;
+  const entry = TOOL_LOGO[tid];
+  const slug = entry ? entry[0] : null;
+  const color = (entry && entry[1]) || TOOL_BRAND_COLOR[tid] || '#5B6B8C';
+  return logoHTML(slug, color, vendor || '?', size);
+}
+
+/* OpenRouter vendor 前缀 → 厂商名（实时卡 logo 用） */
+function orVendorName(prefix){
+  const map = {'openai':'OpenAI','anthropic':'Anthropic','google':'Google','deepseek':'深度求索','qwen':'阿里','moonshotai':'月之暗面','z-ai':'智谱 AI','minimax':'MiniMax','bytedance-seed':'字节跳动','tencent':'腾讯','x-ai':'xAI','mistralai':'Mistral','meta-llama':'Meta','amazon':'Amazon','baidu':'百度'};
+  return map[prefix.toLowerCase()] || prefix;
+}
+function orVendorLogo(orId, size){ return vendorLogo(orVendorName((orId.split('/')[0]||'').toLowerCase()), size); }
+
 /* ===== 工具函数 ===== */
 function esc(s){return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function gradeColor(g){ if(g==='NEW') return '#FF7B42'; return META.gradeDef[g] ? META.gradeDef[g].color : '#7A87A6'; }
@@ -365,7 +440,7 @@ function recoBanner(){
     const scored = allModels().map(m => ({m, s: (META.gradeScore[m.grade]||0) + (m.grade==='NEW'?2.5:0)}))
       .sort((a,b) => b.s - a.s).slice(0, 3);
     const chips = scored.map((x, i) => `<span class="reco-chip" style="animation-delay:${i*90}ms" onclick="openModal('${x.m.id}')">
-      <span class="grade${x.m.grade==='NEW'?' new':''}" style="background:${gradeColor(x.m.grade)};width:26px;height:26px;font-size:12px;border-radius:8px">${x.m.grade}</span>
+      ${vendorLogo(x.m.vendorCn || x.m.vendor, 26)}<span class="grade-pill${x.m.grade==='NEW'?' new':''}" style="background:${gradeColor(x.m.grade)}22;color:${gradeColor(x.m.grade)};border:1px solid ${gradeColor(x.m.grade)}55">${x.m.grade}</span>
       <b>${esc(x.m.name)}</b><i>${esc((x.m.bestFor||'').split('——')[0])}</i></span>`).join('');
     return `<div class="reco">
       <div class="reco-head">💡 <b>综合推荐</b><span class="reco-reason">描述你的需求（如「做公众号」「翻译合同」「便宜好用」），我会为你匹配模型</span></div>
@@ -378,7 +453,7 @@ function recoBanner(){
   const chips = scored.map((x, i) => {
     const m = x.m;
     return `<span class="reco-chip" style="animation-delay:${i*90}ms" onclick="openModal('${m.id}')">
-      <span class="grade${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)};width:26px;height:26px;font-size:12px;border-radius:8px">${m.grade}</span>
+      ${vendorLogo(m.vendorCn || m.vendor, 26)}<span class="grade-pill${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)}22;color:${gradeColor(m.grade)};border:1px solid ${gradeColor(m.grade)}55">${m.grade}</span>
       <b>${esc(m.name)}</b>
       <i>${esc((m.bestFor||'').split('——')[0])}</i>
     </span>`;
@@ -396,9 +471,9 @@ function renderCards(list){
     return `<div class="mcard rise" style="animation-delay:${Math.min(i*40,500)}ms" data-mid="${m.id}" data-tip-key="model:${m.id}"
       onclick="openModal('${m.id}')">
       <div class="mc-top">
-        <div class="mc-grade${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)};color:#0A0E1A">${m.grade}</div>
+        <div class="mc-logo">${vendorLogo(m.vendorCn || m.vendor, 40)}</div>
         <div>
-          <div class="mc-name">${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
+          <div class="mc-name">${esc(m.name)}<span class="grade-pill${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)}22;color:${gradeColor(m.grade)};border:1px solid ${gradeColor(m.grade)}55">${m.grade}</span><span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></div>
           <div class="mc-vendor">${esc(m.vendorCn || m.vendor)}<span class="mc-dot">·</span><span class="mc-price">${costDisplay(m)}</span></div>
         </div>
         <div class="mc-radar" title="六维能力分析">${radarSvg(radarData(m).vals, gradeColor(m.grade), 76)}</div>
@@ -425,7 +500,7 @@ function renderCards(list){
 function renderTable(list){
   const rows = list.map(m => `
     <tr onclick="openModal('${m.id}')">
-      <td><span class="m-name"><span class="grade${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></span><div class="m-vendor">${esc(m.vendorCn || m.vendor)}</div></td>
+      <td><span class="m-name">${vendorLogo(m.vendorCn || m.vendor, 24)}<span class="grade${m.grade==='NEW'?' new':''}" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}<span class="flag">${m.country==='中国'?'🇨🇳':'🇺🇸'}</span></span><div class="m-vendor">${esc(m.vendorCn || m.vendor)}</div></td>
       <td class="ctx-cell"><div class="ctxbar"><div class="bar"><div class="fill" style="width:${Math.min(100, m.contextVal/10)}%"></div></div><span class="txt">${fmtCtx(m.contextVal)}</span></div></td>
       <td><div class="mm">${mmIcon(m.multimodal)}</div></td>
       <td>${m.thinking?'<span class="tag think">🧠 思考</span>':''}${(m.strengths||[]).slice(0,3).map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</td>
@@ -514,6 +589,7 @@ function renderTools(){
     const models = t.builtinModels.map(id => MODELS.find(m => m.id === id)).filter(Boolean);
     return `<div class="toolcard rise" style="animation-delay:${Math.min(i*40,400)}ms" data-mid="tool-${t.id}" data-tip-key="tool:${t.id}">
       <div class="tc-top">
+        <div class="tc-logo">${toolLogo(t.id, t.name, 42)}</div>
         <div>
           <h3>${esc(t.name)} <span style="font-size:11px;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:6px;color:var(--muted);font-weight:600">${esc(t.type)}</span></h3>
           <div class="t-sub">${esc(t.vendor)} · ${esc(t.platform)}</div>
@@ -779,6 +855,7 @@ function liveSection(title, list, kind){
     const sub = kind==='created' ? `上线 ${created}` : (kind==='ctx' ? `${Math.round((m.context_length||0)/1000)}K` : fmtPricePerM(m.pricing?.prompt));
     return `<div class="live-card" style="animation-delay:${Math.min(i*70,600)}ms" onclick="openLive('${esc(m.id)}')">
       <div class="lc-body">
+        <div class="lc-logo">${orVendorLogo(m.id, 34)}</div>
         <div class="lc-info">
           <div class="live-top"><span class="live-name">${esc(m.name || m.id)}</span>${tag}</div>
           <div class="live-id">${esc(m.id)}</div>
@@ -803,7 +880,7 @@ function openLive(id){
   const mods = m.architecture?.input_modalities || [];
   document.getElementById('modalBody').innerHTML = `
     <button class="close" onclick="closeModal()">✕</button>
-    <h2>${esc(m.name || m.id)} ${local?'<span class="tag think">✓ 本地已收录</span>':'<span class="tag" style="background:rgba(245,201,107,.15);color:var(--gold2);border-color:rgba(245,201,107,.4)">🆕 新模型</span>'}</h2>
+    <h2>${orVendorLogo(m.id, 30)} ${esc(m.name || m.id)} ${local?'<span class="tag think">✓ 本地已收录</span>':'<span class="tag" style="background:rgba(245,201,107,.15);color:var(--gold2);border-color:rgba(245,201,107,.4)">🆕 新模型</span>'}</h2>
     <div class="m-sub">${esc(m.id)} · OpenRouter 实时数据</div>
     <div class="m-grid">
       <div class="m-item"><div class="k">上下文窗口</div><div class="v">${Math.round((m.context_length||0)/1000)}K</div></div>
@@ -840,7 +917,7 @@ function openModal(id){
   const toolStr = tools.length ? tools.map(t => `<span class="tool-badge ${toolBadgeClass[t.id]||'other'}" style="cursor:default">${esc(t.name)}</span>`).join('') : '<span style="color:var(--dim)">未内置任何 Agent 工具</span>';
   document.getElementById('modalBody').innerHTML = `
     <button class="close" onclick="closeModal()">✕</button>
-    <h2><span class="grade" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}</h2>
+    <h2>${vendorLogo(m.vendorCn || m.vendor, 30)}<span class="grade" style="background:${gradeColor(m.grade)}">${m.grade}</span>${esc(m.name)}</h2>
     <div class="m-sub">${esc(m.vendorCn||m.vendor)} · ${m.country} · ${fmtCtx(m.contextVal)} 上下文 · ${m.cost}费用${m.thinking?' · 🧠 思考模式':''}</div>
     <div class="m-grid">
       <div class="m-item"><div class="k">综合等级</div><div class="v" style="color:${gradeColor(m.grade)}">${m.grade} · ${META.gradeDef[m.grade].label}</div></div>
@@ -862,7 +939,7 @@ function openAutoModal(m){
   const days = m.created ? Math.max(0, Math.round((Date.now()/1000 - m.created)/86400)) : null;
   document.getElementById('modalBody').innerHTML = `
     <button class="close" onclick="closeModal()">✕</button>
-    <h2><span class="grade" style="background:${gradeColor('NEW')}">NEW</span>${esc(m.name)}</h2>
+    <h2>${vendorLogo(m.vendorCn || m.vendor, 30)}<span class="grade new" style="background:${gradeColor('NEW')}">NEW</span>${esc(m.name)}</h2>
     <div class="m-sub">${esc(m.vendorCn)} · ${m.country} · ${fmtCtx(m.contextVal)} 上下文 · ${m.cost}费用${m.thinking?' · 🧠 推理':''}${days!==null?` · ${days}天前上线`:''}</div>
     <div class="m-grid">
       <div class="m-item"><div class="k">状态</div><div class="v" style="color:#FF7B42">新收录 · 待评级</div></div>
